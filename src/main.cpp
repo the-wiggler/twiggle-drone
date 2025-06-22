@@ -198,8 +198,8 @@ struct PID {
 };
 
 // PID Coefficients (change for tuning)
-constexpr PID ROLL_PID 	{ 1.0, 0.5, 0.1 };
-constexpr PID PITCH_PID { 1.0, 0.5, 0.1 };
+constexpr PID ROLL_PID 	{ 0.6, 0.1, 0.1 };
+constexpr PID PITCH_PID { 0.6, 0.1, 0.1 };
 constexpr PID YAW_PID	{ 1.0, 0.5, 0.1 };
 
 struct PIDErrors {
@@ -263,13 +263,31 @@ void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, u
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// MONITORING FUNCTIONS
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void monitorMotorSpeeds() {
+	Serial.print("\rFL: "); Serial.print(motorSpeed[MOTOR_FL]); Serial.print(" | FR: ");
+	Serial.print(motorSpeed[MOTOR_FR]); Serial.print(" | RL: "); Serial.print(motorSpeed[MOTOR_RL]);
+	Serial.print(" | RR: "); Serial.print(motorSpeed[MOTOR_RR]); Serial.print("     ");
+}
+void monitorRollPitchPID(float rollOutput, float pitchOutput) {
+	Serial.print("\rRoll: "); Serial.print(orientations[0]); Serial.print(" - Roll PID: "); 
+	Serial.print(rollOutput); Serial.print(" | Pitch: "); Serial.print(orientations[1]); 
+	Serial.print(" - Pitch PID: "); 
+	Serial.print(pitchOutput); Serial.print("         ");
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// END MONITORING FUNCTIONS
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOOP
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-uint8_t throttle = 150;
+uint8_t throttle = 200;
 
 void loop() {
 	// check if a failure has been detected
-	// if (millis() > 15000) emergencyStop(); // timer to run the program until a cutoff time
+	if (millis() > 15000) emergencyStop(); // timer to run the program until a cutoff time
 	if (SYSTEM_FAILURE) return;
 
 	// get sensor info
@@ -286,17 +304,8 @@ void loop() {
 
 	updateMotorSpeed();
 
-	Serial.print("\rFL: ");
-	Serial.print(motorSpeed[MOTOR_FL]);
-	Serial.print(" | FR: ");
-	Serial.print(motorSpeed[MOTOR_FR]);
-	Serial.print(" | RL: ");
-	Serial.print(motorSpeed[MOTOR_RL]);
-	Serial.print(" | RR: ");
-	Serial.print(motorSpeed[MOTOR_RR]);
-	Serial.print("     ");
-
-	// Serial.print("\rRoll: "); Serial.print(orientations[0]); Serial.print(" - Roll PID: "); Serial.print(rollOutput); Serial.print(" | Pitch: "); Serial.print(orientations[1]); Serial.print(" - Pitch PID: "); Serial.print(pitchOutput); Serial.print("         ");
+	// monitorMotorSpeeds();
+	// monitorRollPitchPID(rollOutput, pitchOutput);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END LOOP
