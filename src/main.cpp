@@ -76,7 +76,7 @@ void setup() {
 
 	// wait 3 seconds
 	Serial.println("Startup...");
-	delay(3000);
+	delay(1000);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END SETUP
@@ -242,6 +242,22 @@ float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, floa
 	return output;
 }
 
+void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, uint8_t throttle) {
+	int16_t rollTrim 	= 50 * rollOutput;
+	int16_t pitchTrim 	= 50 * pitchOutput;
+	int16_t yawTrim 	= 50 * yawOutput;
+
+	int16_t speedFL = throttle - pitchTrim - rollTrim - yawTrim;
+	int16_t speedFR = throttle - pitchTrim + rollTrim + yawTrim;
+	int16_t speedRL = throttle + pitchTrim - rollTrim + yawTrim;
+	int16_t speedRR = throttle + pitchTrim + rollTrim - yawTrim;
+
+	motorSpeed[MOTOR_FL] = constrain(speedFL, 0, 255);
+	motorSpeed[MOTOR_FR] = constrain(speedFR, 0, 255);
+	motorSpeed[MOTOR_RL] = constrain(speedRL, 0, 255);
+	motorSpeed[MOTOR_RR] = constrain(speedRR, 0, 255);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END PID FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -249,8 +265,11 @@ float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, floa
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // LOOP
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+uint8_t throttle = 150;
+
 void loop() {
 	// check if a failure has been detected
+	// if (millis() > 15000) emergencyStop(); // timer to run the program until a cutoff time
 	if (SYSTEM_FAILURE) return;
 
 	// get sensor info
@@ -261,9 +280,23 @@ void loop() {
 	// perform PID calculation
 	float rollOutput = calculatePID(ROLL_PID, rollErrors, SETPOINT_ROLL, orientations[0]);
 	float pitchOutput = calculatePID(PITCH_PID, pitchErrors, SETPOINT_PITCH, orientations[1]);
+	float yawOutput = 0;
 
-	Serial.print("\rRoll: "); Serial.print(orientations[0]); Serial.print(" - Roll PID: "); Serial.print(rollOutput); Serial.print(" | Pitch: "); Serial.print(orientations[1]); Serial.print(" - Pitch PID: "); Serial.print(pitchOutput); Serial.print("         ");
+	updateMotorsFromPID(rollOutput, pitchOutput, yawOutput, throttle);
 
+	updateMotorSpeed();
+
+	Serial.print("\rFL: ");
+	Serial.print(motorSpeed[MOTOR_FL]);
+	Serial.print(" | FR: ");
+	Serial.print(motorSpeed[MOTOR_FR]);
+	Serial.print(" | RL: ");
+	Serial.print(motorSpeed[MOTOR_RL]);
+	Serial.print(" | RR: ");
+	Serial.print(motorSpeed[MOTOR_RR]);
+	Serial.print("     ");
+
+	// Serial.print("\rRoll: "); Serial.print(orientations[0]); Serial.print(" - Roll PID: "); Serial.print(rollOutput); Serial.print(" | Pitch: "); Serial.print(orientations[1]); Serial.print(" - Pitch PID: "); Serial.print(pitchOutput); Serial.print("         ");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END LOOP
