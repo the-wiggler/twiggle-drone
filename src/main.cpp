@@ -20,8 +20,9 @@ constexpr uint8_t MOTOR_RR 			= 3; 	// PWM channel for motor rear right
 constexpr uint32_t PWM_FREQUENCY 	= 1000;	// PWM update frequency
 constexpr uint8_t PWM_RESOLUTION 	= 8;	// PWM resolution (bits)
 
-bool SYSTEM_FAILURE = false;				// this is set to true if the system catches a fatal error that
-											// requires all operations to be halted by (kinda) stopping the loop
+bool SYSTEM_FAILURE = false;				// this is set to true if the system catches a fatal 
+											// error that requires all operations to be halted by 
+											// (kinda) stopping the loop
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // SETUP
@@ -151,7 +152,7 @@ sensors_event_t accel, gyro, temp, mag;	// start sensor collection objects
 
 float accelData[3] 		= { 0, 0, 0 }; 	// array that holds acceleration data from the ICM20948
 float angularV[3]  		= { 0, 0, 0 }; 	// array that holds angular velocity data.
-float orientations[2] 	= { 0, 0    };  // array that holds angular orientation values (pitch & yaw)
+float orientations[3] 	= { 0, 0, 0 };  // array that holds angular orientation values (pitch & yaw)
 										// Array order:
 										// 0: Roll
 										// 1: Pitch
@@ -168,14 +169,14 @@ void readICM() {
 	accelData[2] = accel.acceleration.z;
 
 	angularV[0] = gyro.gyro.y;
-	angularV[1] = gyro.gyro.z;
+	angularV[1] = gyro.gyro.x;
 	angularV[2] = gyro.gyro.z;
 }
 
 // function to calculate the orientation angles (x,y,z) of the drone during a cycle
 void calculateOrientation() {
 	orientations[0] = atan(accelData[1] / (sqrt((accelData[0] * accelData[0]) + (accelData[2] * accelData[2]))));
-
+	// magical angle calculations!
 	orientations[1] = atan(-accelData[0] / (sqrt((accelData[1] * accelData[1]) + (accelData[2] * accelData[2]))));
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,9 +198,9 @@ struct PID {
 };
 
 // PID Coefficients (change for tuning)
-constexpr PID ROLL_PID 	{ 0.6, 0.1, 0.1 };
-constexpr PID PITCH_PID { 0.6, 0.1, 0.1 };
-constexpr PID YAW_PID	{ 1.0, 0.5, 0.1 };
+constexpr PID ROLL_PID 	{ 0.6, 0.1, 0.05 };
+constexpr PID PITCH_PID { 0.6, 0.1, 0.05 };
+constexpr PID YAW_PID	{ 1.0, 0.5, 0.02 };
 
 struct PIDErrors {
 	float currentError;
@@ -213,15 +214,23 @@ PIDErrors rollErrors 	{ 0, 0, 0, 0 };
 PIDErrors pitchErrors 	{ 0, 0, 0, 0 };
 PIDErrors yawErrors 	{ 0, 0, 0, 0 };
 
+constexpr float INTEGRAL_MAX = 100.0;
+constexpr float INTEGRAL_MIN = -100.0;
+
 float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, float currentState) {
 	unsigned long currentTime = millis();
-	float deltaTime = (currentTime - errors.lastTime) / 1000;	// convert to seconds
+
+	// convert time from ms to seconds
+	float deltaTime = (currentTime - errors.lastTime) / 1000.0;
 	
 	// calculate current error
 	errors.currentError = setpoint - currentState;
 
 	// calcualte integral
 	errors.integral += errors.currentError * deltaTime;
+
+	// prevents integral from getting too large
+	errors.integral = constrain(errors.integral, INTEGRAL_MIN, INTEGRAL_MAX);
 
 	// calculate derivative
 	float dt = 0;
@@ -270,10 +279,18 @@ void monitorMotorSpeeds() {
 	Serial.print(" | RR: "); Serial.print(motorSpeed[MOTOR_RR]); Serial.print("     ");
 }
 void monitorRollPitchPID(float rollOutput, float pitchOutput) {
-	Serial.print("\rRoll: "); Serial.print(orientations[0]); Serial.print(" - Roll PID: "); 
-	Serial.print(rollOutput); Serial.print(" | Pitch: "); Serial.print(orientations[1]); 
-	Serial.print(" - Pitch PID: "); 
-	Serial.print(pitchOutput); Serial.print("         ");
+	static unsigned long lastUpdateTime = 0; // Tracks the last time the Serial output was updated
+	unsigned long currentTime = millis();
+
+	// Check if 500 ms have passed since the last update
+	if (currentTime - lastUpdateTime >= 500) {
+		Serial.print("\rRoll: "); Serial.print(orientations[0]); Serial.print(" - Roll PID: "); 
+		Serial.print(rollOutput); Serial.print(" | Pitch: "); Serial.print(orientations[1]); 
+		Serial.print(" - Pitch PID: "); 
+		Serial.print(pitchOutput); Serial.print("         ");
+
+		lastUpdateTime = currentTime;
+	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END MONITORING FUNCTIONS
@@ -303,8 +320,8 @@ void loop() {
 
 	updateMotorSpeed();
 
-	monitorMotorSpeeds();
-	// monitorRollPitchPID(rollOutput, pitchOutput);
+	// monitorMotorSpeeds();
+	monitorRollPitchPID(rollOutput, pitchOutput);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END LOOP
