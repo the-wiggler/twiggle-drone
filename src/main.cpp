@@ -27,7 +27,6 @@ bool SYSTEM_FAILURE = false;				// this is set to true if the system catches a f
 // SETUP
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
-
 	Serial.begin(115200);
 	delay(3000); // small delay to allow serial monitor to set up
 
@@ -247,10 +246,10 @@ void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, u
 	int16_t pitchTrim 	= 50 * pitchOutput;
 	int16_t yawTrim 	= 50 * yawOutput;
 
-	int16_t speedFL = throttle - pitchTrim - rollTrim - yawTrim;
-	int16_t speedFR = throttle - pitchTrim + rollTrim + yawTrim;
-	int16_t speedRL = throttle + pitchTrim - rollTrim + yawTrim;
-	int16_t speedRR = throttle + pitchTrim + rollTrim - yawTrim;
+	int16_t speedFL = throttle + pitchTrim + rollTrim - yawTrim;
+	int16_t speedFR = throttle + pitchTrim - rollTrim + yawTrim;
+	int16_t speedRL = throttle - pitchTrim + rollTrim + yawTrim;
+	int16_t speedRR = throttle - pitchTrim - rollTrim - yawTrim;
 
 	motorSpeed[MOTOR_FL] = constrain(speedFL, 0, 255);
 	motorSpeed[MOTOR_FR] = constrain(speedFR, 0, 255);
@@ -287,7 +286,7 @@ uint8_t throttle = 200;
 
 void loop() {
 	// check if a failure has been detected
-	if (millis() > 15000) emergencyStop(); // timer to run the program until a cutoff time
+	// if (millis() > 15000) emergencyStop(); // timer to run the program until a cutoff time
 	if (SYSTEM_FAILURE) return;
 
 	// get sensor info
@@ -304,7 +303,7 @@ void loop() {
 
 	updateMotorSpeed();
 
-	// monitorMotorSpeeds();
+	monitorMotorSpeeds();
 	// monitorRollPitchPID(rollOutput, pitchOutput);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
