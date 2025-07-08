@@ -10,6 +10,7 @@
 #include "sensors.h"
 #include "PID.h"
 #include "debug.h"
+#include "communication.h"
 
 SemaphoreHandle_t sensorMutex;
 
@@ -23,6 +24,8 @@ void setup() {
 	delay(3000); // small delay to allow serial monitor to set up
 
 	sensorMutex = xSemaphoreCreateMutex();
+
+	wifiSetup();
 
 	/////// MOTOR INITIALIZATION ///////////////////////////////////////////////////////////////////
 	// front left motor
@@ -71,7 +74,7 @@ void setup() {
 	xTaskCreatePinnedToCore(
 		core0Process,
 		"core0Process",
-		10000,
+		20000,
 		NULL,
 		2,
 		NULL,
@@ -122,7 +125,7 @@ void loop() {
 	updateMotorSpeed();
 
 	// monitorRollPitchPID(rollOutput, pitchOutput);
-	monitorMotorSpeeds();
+	// monitorMotorSpeeds();
 
 	// maintains the 200 Hz clock speed
 	unsigned long elapsedTime = micros() - startTime;
@@ -144,6 +147,7 @@ void core0Process(void *parameter) {
 				calculateOrientation();
 				xSemaphoreGive(sensorMutex);
 			}
+			wifiCommunication();
 		}
 		vTaskDelay(10 / portTICK_PERIOD_MS);
 	}
