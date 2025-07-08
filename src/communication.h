@@ -14,16 +14,18 @@ void wifiSetup() {
     udp.begin(localPort);
 }
 
-void wifiCommunication() {
+void recieveUDPCommand() {
     int packetSize = udp.parsePacket();
 
     if (packetSize) {
         char incomingPacket[255];
         int len = udp.read(incomingPacket, 255);
-        Serial.println(incomingPacket);
-        // instead of just printing the packet, I can use the packet data to change throttle info!
-        // this will be useful for controls bc I can change the PID setpoint and such
-        // im just writing this so I rememebr
+
+        for (int i = 0; i < len; i++) {
+            Serial.print((char)incomingPacket[i]);
+            Serial.print(" ");
+        }
+        Serial.println();
     }
 }
 

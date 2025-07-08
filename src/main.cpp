@@ -147,7 +147,7 @@ void core0Process(void *parameter) {
 				calculateOrientation();
 				xSemaphoreGive(sensorMutex);
 			}
-			wifiCommunication();
+			recieveUDPCommand();
 		}
 		vTaskDelay(10 / portTICK_PERIOD_MS);
 	}

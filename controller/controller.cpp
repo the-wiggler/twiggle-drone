@@ -6,19 +6,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include "controller.hpp"
+#include <cmath>
 #pragma comment(lib, "ws2_32.lib")
 
 TTF_Font* font = nullptr;
-
-void runCommunication() {
-    std::string cmd;
-    while (std::cout << "> ", std::getline(std::cin, cmd) && cmd != "quit") {
-        if (!cmd.empty()) {
-            // sendto(sock, cmd.c_str(), cmd.length(), 0, (sockaddr*)&addr, sizeof(addr));
-            std::cout << "Sent: " << cmd << std::endl;
-        }
-    }
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN
@@ -36,7 +27,7 @@ int main() {
     if (!font) SDL_ShowSimpleMessageBox(0x00000010, "Drone Controller", 
                                         "ERROR: FONT FILE <font.ttf> NOT FOUND", NULL);
     constexpr SDL_Color whiteColor = {255, 255, 255, 255};
-
+    
     // UDP Communication
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -47,7 +38,6 @@ int main() {
 
     // drone setup
     uint8_t throttle = motorIdleSpeed; // sets motor speed to idle (this value should match set idle in drone code)
-    uint8_t motor_speeds[4] = { 0, 0, 0, 0 };  // this holds the motors speed values that are communicated from the drone
     
     ///////////////////////////////////////////////////////////////////////  /  /  /  /  /  ///////
     /////// MAIN WINDOW LOOP                                        ////////////////////////////////
@@ -78,21 +68,45 @@ int main() {
         bool d_pressed = keyStates[SDL_SCANCODE_D];
         bool space_pressed = keyStates[SDL_SCANCODE_SPACE];
 
+        int8_t control_vector_x = 0; // this is the x component of the direction vector instruction to be sent to the drone
+        int8_t control_vector_y = 0; // same as above but for y
+
         if (w_pressed) {
+            control_vector_y = 1; // set a vector component to FORWARD direction
             moveForward();
         }
         if (s_pressed) {
+            control_vector_y = -1; // set a vector component to BACKWARD direction
             moveBackward();
         }
-        if (a_pressed) {
+        if (a_pressed) { 
+            control_vector_x = -1; // set a vector component to LEFT direction
             moveLeft();
         }
         if (d_pressed) {
+            control_vector_x = 1; // set a vector component to RIGHT direction
             moveRight();
         }
         if (space_pressed) {
             if (throttleLevel <= 255) throttleLevel += 4;
         }
+        /////// CALCULATE DIRECTION INSTRUCTION VECTOR /////////////////////////////////////////////
+        
+
+        /////// SEND UDP DATA //////////////////////////////////////////////////////////////////////
+        // udp_data is an array that holds all control data to be sent to the drone. The drone
+        // will recognize the bytes in a set format defined below, so it must match on both programs!
+        // the first element is what to change the throttle to
+        // the second and third element is what vector the drone should aim to change its direction of travel to
+        char udp_data[] = { throttleLevel, control_vector_x, control_vector_y };
+        int len = sizeof(udp_data);
+        sendto(sock, udp_data, len, 0, (sockaddr*)&addr, sizeof(addr));
+
+        for (int i = 0; i < sizeof(udp_data); i++) {
+            std::cout << udp_data[i] << " ";
+            std::cout << std::endl;
+        }
+
 
         /////// THROTTLE TEXT //////////////////////////////////////////////////////////////////////
         std::stringstream throttleStream;
@@ -100,13 +114,11 @@ int main() {
         std::string throttleText = throttleStream.str();
         SDL_Surface* throttleSurface = TTF_RenderText_Blended(font, throttleText.c_str(), throttleText.length(), whiteColor);
         SDL_Texture* throttleTexture = SDL_CreateTextureFromSurface(renderer, throttleSurface);
-            SDL_FRect textRect = {50.0f, 50.0f, (float)throttleSurface->w, (float)throttleSurface->h};
-            
-            SDL_RenderTexture(renderer, throttleTexture, NULL, &textRect);
-            SDL_DestroyTexture(throttleTexture);  // Clean up texture
+        SDL_FRect textRect = {50.0f, 50.0f, (float)throttleSurface->w, (float)throttleSurface->h};
+        
+        SDL_RenderTexture(renderer, throttleTexture, NULL, &textRect);
+        SDL_DestroyTexture(throttleTexture);  // Clean up texture
         SDL_DestroySurface(throttleSurface);  // Clean up surface
-
-        /////// TEXT //////////////////////////////////////////////////////////////////////
 
         /////// TEXT //////////////////////////////////////////////////////////////////////
 
