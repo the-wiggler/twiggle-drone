@@ -21,11 +21,14 @@ void recieveUDPCommand() {
         char incomingPacket[255];
         int len = udp.read(incomingPacket, 255);
 
-        for (int i = 0; i < len; i++) {
-            Serial.print((char)incomingPacket[i]);
-            Serial.print(" ");
+        if (len > 0) {
+            Serial.print("Received Packet: ");
+            for (int i = 0; i < len; i++) {
+                Serial.print(incomingPacket[i], HEX);
+                Serial.print(" ");
+            }
+            Serial.println();
         }
-        Serial.println();
     }
 }
 

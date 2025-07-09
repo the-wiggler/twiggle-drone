@@ -72,40 +72,45 @@ int main() {
         int8_t control_vector_y = 0; // same as above but for y
 
         if (w_pressed) {
-            control_vector_y = 1; // set a vector component to FORWARD direction
+            control_vector_y = 127; // set a vector component to FORWARD direction
             moveForward();
         }
         if (s_pressed) {
-            control_vector_y = -1; // set a vector component to BACKWARD direction
+            control_vector_y = -127; // set a vector component to BACKWARD direction
             moveBackward();
         }
         if (a_pressed) { 
-            control_vector_x = -1; // set a vector component to LEFT direction
+            control_vector_x = -127; // set a vector component to LEFT direction
             moveLeft();
         }
         if (d_pressed) {
-            control_vector_x = 1; // set a vector component to RIGHT direction
+            control_vector_x = 127; // set a vector component to RIGHT direction
             moveRight();
         }
         if (space_pressed) {
-            if (throttleLevel <= 255) throttleLevel += 4;
-        }
-        /////// CALCULATE DIRECTION INSTRUCTION VECTOR /////////////////////////////////////////////
-        
+            if (throttleLevel < 251) throttleLevel += 4;
+        }        
 
         /////// SEND UDP DATA //////////////////////////////////////////////////////////////////////
         // udp_data is an array that holds all control data to be sent to the drone. The drone
         // will recognize the bytes in a set format defined below, so it must match on both programs!
         // the first element is what to change the throttle to
         // the second and third element is what vector the drone should aim to change its direction of travel to
-        char udp_data[] = { throttleLevel, control_vector_x, control_vector_y };
-        int len = sizeof(udp_data);
-        sendto(sock, udp_data, len, 0, (sockaddr*)&addr, sizeof(addr));
+        struct udpPacket {
+            uint8_t throt;
+            int8_t crtl_x;
+            int8_t ctrl_y;
+        };
 
-        for (int i = 0; i < sizeof(udp_data); i++) {
-            std::cout << udp_data[i] << " ";
-            std::cout << std::endl;
-        }
+        udpPacket packet = { throttleLevel, control_vector_x, control_vector_y };
+        int len = sizeof(packet);
+        sendto(sock, (const char*)&packet, len, 0, (sockaddr*)&addr, sizeof(addr));
+
+        std::cout << "PACKET CONTENTS (hex): " 
+          << "0x" << std::hex << (int)packet.throt 
+          << " 0x" << (int)(uint8_t)packet.crtl_x 
+          << " 0x" << (int)(uint8_t)packet.ctrl_y 
+          << std::dec << std::endl;  // Reset to decimal
 
 
         /////// THROTTLE TEXT //////////////////////////////////////////////////////////////////////
@@ -126,7 +131,7 @@ int main() {
         
         if (throttleLevel > 50) throttleLevel -= 2;
         SDL_RenderPresent(renderer);
-        SDL_Delay(16);
+        SDL_Delay(150);
     }
 
     /////// CLEANUP ////////////////////////////////////////////////////////////////////////////////
