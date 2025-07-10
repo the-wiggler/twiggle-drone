@@ -7,6 +7,8 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include "controller.hpp"
 #include <cmath>
+#include <chrono>
+#include <thread>
 #pragma comment(lib, "ws2_32.lib")
 
 TTF_Font* font = nullptr;
@@ -45,6 +47,7 @@ int main() {
     /////// MAIN WINDOW LOOP                                        ////////////////////////////////
     ///////////////////////////////////////////////////////////////////////  /  /  /  /  /  ///////
     bool windowRunning = true;
+    bool motors_killed = false;
     SDL_Event e;
 
     uint8_t throttleLevel = motorIdleSpeed;
@@ -97,7 +100,11 @@ int main() {
             if (throttleLevel < 251) throttleLevel += 4;
         }
         if (keyStates[SDL_SCANCODE_ESCAPE]) windowRunning = false;
-
+        if (keyStates[SDL_SCANCODE_0]) {
+            throttleLevel = 0;
+            std::cout << "MOTORS KILLED!\n";
+            motors_killed = true;
+        } 
         /////// CONVERT VECTORS TO SETPOINTS ///////////////////////////////////////////////////////
         // these are the new setpoint values that should be sent to the drone after recieving controller input
         float roll_setpoint = convertVectorToSetpoint(control_vectors.roll);
@@ -138,9 +145,14 @@ int main() {
 
         /////// TEXT //////////////////////////////////////////////////////////////////////
         
-        if (throttleLevel > 50) throttleLevel -= 2;
+        if (throttleLevel > 10) throttleLevel -= 2;
         SDL_RenderPresent(renderer);
         SDL_Delay(32);
+
+        if (motors_killed) {
+            windowRunning = false;
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
     }
 
     /////// CLEANUP ////////////////////////////////////////////////////////////////////////////////

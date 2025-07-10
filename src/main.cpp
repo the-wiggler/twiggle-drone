@@ -126,9 +126,11 @@ void loop() {
 	if (millis() - lastPacketTime > PACKET_TIMEOUT_MS && lastPacketTime != 0) {
 		if(!packetTimeout) {
 			setAllMotorSpeed(0);
+			updateMotorSpeed();
 
 			Serial.println("PACKET TIMEOUT - MOTORS KILLED");
 			packetTimeout = true;
+			monitorMotorSpeeds();
 		}
 		return;
 	}
