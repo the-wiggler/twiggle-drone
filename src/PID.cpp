@@ -10,9 +10,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // PID Coefficients (change for tuning)
-PID ROLL_PID 	{ 0.6, 0.02, 0.1 };
-PID PITCH_PID { 0.6, 0.02, 0.1 };
-PID YAW_PID	{ 1.0, 0.5, 0.02 };
+PID ROLL_PID 	{ 0.6, 0.02, 0.01 };
+PID PITCH_PID { 0.6, 0.02, 0.01 };
+PID YAW_PID	{ 1.0, 0.5, 0.01 };
 
 // stores error states of an iteration so the program can bring the state closer to setpoints
 PIDErrors rollErrors 	{ 0, 0, 0, 0 };

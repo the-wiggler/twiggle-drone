@@ -115,9 +115,9 @@ void loop() {
 	}
 	// basically if the mutex is in use it uses previous packet data until it can read more
 
-	// Serial.print("Roll Setpoint: "); Serial.print(local_control_packet.roll); Serial.print(" | ");
-	// Serial.print("Pitch Setpoint: "); Serial.print(local_control_packet.pitch); Serial.print(" | ");
-	// Serial.print("Throttle: "); Serial.print(local_control_packet.throttle);
+	//Serial.print("\rRoll Setpoint: "); Serial.print(local_control_packet.roll); Serial.print(" | ");
+	//Serial.print("Pitch Setpoint: "); Serial.print(local_control_packet.pitch); Serial.print(" | ");
+	//Serial.print("Throttle: "); Serial.print(local_control_packet.throttle);
 
 	unsigned long  startTime = micros();
 
@@ -145,7 +145,7 @@ void loop() {
 	updateMotorSpeed();
 
 	monitorRollPitchPID(rollOutput, pitchOutput);
-	// monitorMotorSpeeds();
+	//monitorMotorSpeeds();
 
 	// maintains the 200 Hz clock speed
 	unsigned long elapsedTime = micros() - startTime;
@@ -179,7 +179,6 @@ void core0Process(void *parameter) {
 				xSemaphoreGive(sensorMutex);
 			}
 		}
-		vTaskDelay(10 / portTICK_PERIOD_MS);
 	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////

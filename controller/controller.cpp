@@ -139,7 +139,7 @@ int main() {
         
         if (throttleLevel > 50) throttleLevel -= 2;
         SDL_RenderPresent(renderer);
-        SDL_Delay(100);
+        SDL_Delay(32);
     }
 
     /////// CLEANUP ////////////////////////////////////////////////////////////////////////////////
