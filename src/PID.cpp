@@ -9,14 +9,9 @@
 // PID FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// setpoints (orientation conditions the controller wants to aim for) ((no change in ang velocity))
-float SETPOINT_ROLL 	= 0.0;
-float SETPOINT_PITCH 	= 0.0;
-float SETPOINT_YAW 		= 0.0;
-
 // PID Coefficients (change for tuning)
-PID ROLL_PID 	{ 0.6, 0.1, 0.05 };
-PID PITCH_PID { 0.6, 0.1, 0.05 };
+PID ROLL_PID 	{ 0.6, 0.02, 0.1 };
+PID PITCH_PID { 0.6, 0.02, 0.1 };
 PID YAW_PID	{ 1.0, 0.5, 0.02 };
 
 // stores error states of an iteration so the program can bring the state closer to setpoints

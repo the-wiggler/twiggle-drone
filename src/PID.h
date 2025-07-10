@@ -19,10 +19,6 @@ struct PIDErrors {
 	unsigned long lastTime;
 };
 
-extern float SETPOINT_ROLL;
-extern float SETPOINT_PITCH;
-extern float SETPOINT_YAW;
-
 extern PID ROLL_PID;
 extern PID PITCH_PID;
 extern PID YAW_PID;

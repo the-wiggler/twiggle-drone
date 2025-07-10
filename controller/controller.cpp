@@ -11,6 +11,8 @@
 
 TTF_Font* font = nullptr;
 
+// hi there if you're reading this :)
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,7 +40,7 @@ int main() {
 
     // drone setup
     uint8_t throttle = motorIdleSpeed; // sets motor speed to idle (this value should match set idle in drone code)
-    
+
     ///////////////////////////////////////////////////////////////////////  /  /  /  /  /  ///////
     /////// MAIN WINDOW LOOP                                        ////////////////////////////////
     ///////////////////////////////////////////////////////////////////////  /  /  /  /  /  ///////
@@ -68,48 +70,54 @@ int main() {
         bool d_pressed = keyStates[SDL_SCANCODE_D];
         bool space_pressed = keyStates[SDL_SCANCODE_SPACE];
 
-        int8_t control_vector_x = 0; // this is the x component of the direction vector instruction to be sent to the drone
-        int8_t control_vector_y = 0; // same as above but for y
+        // these are the components of the direction vector instruction to be converted into setpoint measurements
+        // (in radians) that will be sent to the drone
+        controlVector control_vectors;
+        control_vectors.roll = 0;
+        control_vectors.pitch = 0;
+        control_vectors.yaw = 0;
 
-        if (w_pressed) {
-            control_vector_y = 127; // set a vector component to FORWARD direction
+        if (w_pressed && !s_pressed) {
+            control_vectors.pitch = 127; // set a control vector component to FORWARD direction
             moveForward();
         }
-        if (s_pressed) {
-            control_vector_y = -127; // set a vector component to BACKWARD direction
+        if (s_pressed && !w_pressed) {
+            control_vectors.pitch = -127; // set a control vector component to BACKWARD direction
             moveBackward();
         }
-        if (a_pressed) { 
-            control_vector_x = -127; // set a vector component to LEFT direction
-            moveLeft();
+        if (a_pressed && !d_pressed) { 
+            control_vectors.roll = -127; // set a control vector component to LEFT direction
+            moveLeft(); 
         }
-        if (d_pressed) {
-            control_vector_x = 127; // set a vector component to RIGHT direction
+        if (d_pressed && !a_pressed) {
+            control_vectors.roll = 127; // set a control vector component to RIGHT direction
             moveRight();
         }
         if (space_pressed) {
             if (throttleLevel < 251) throttleLevel += 4;
         }        
 
+        /////// CONVERT VECTORS TO SETPOINTS ///////////////////////////////////////////////////////
+        // these are the new setpoint values that should be sent to the drone after recieving controller input
+        float roll_setpoint = convertVectorToSetpoint(control_vectors.roll);
+        float pitch_setpoint = convertVectorToSetpoint(control_vectors.pitch);
+        float yaw_setpoint = 0;
+
         /////// SEND UDP DATA //////////////////////////////////////////////////////////////////////
         // udp_data is an array that holds all control data to be sent to the drone. The drone
         // will recognize the bytes in a set format defined below, so it must match on both programs!
         // the first element is what to change the throttle to
         // the second and third element is what vector the drone should aim to change its direction of travel to
-        struct udpPacket {
-            uint8_t throt;
-            int8_t crtl_x;
-            int8_t ctrl_y;
-        };
 
-        udpPacket packet = { throttleLevel, control_vector_x, control_vector_y };
+        udpPacket packet = { throttleLevel, roll_setpoint, pitch_setpoint, yaw_setpoint };
         int len = sizeof(packet);
         sendto(sock, (const char*)&packet, len, 0, (sockaddr*)&addr, sizeof(addr));
 
         std::cout << "PACKET CONTENTS (hex): " 
-          << "0x" << std::hex << (int)packet.throt 
-          << " 0x" << (int)(uint8_t)packet.crtl_x 
-          << " 0x" << (int)(uint8_t)packet.ctrl_y 
+          << (int)packet.throttle 
+          << " " << packet.roll
+          << " " << packet.pitch 
+          << " " << packet.yaw
           << std::dec << std::endl;  // Reset to decimal
 
 
@@ -131,7 +139,7 @@ int main() {
         
         if (throttleLevel > 50) throttleLevel -= 2;
         SDL_RenderPresent(renderer);
-        SDL_Delay(150);
+        SDL_Delay(100);
     }
 
     /////// CLEANUP ////////////////////////////////////////////////////////////////////////////////

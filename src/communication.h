@@ -4,6 +4,13 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
+struct udpPacket {
+    uint8_t throttle;
+    float roll;
+    float pitch;
+    float yaw;
+};
+
 const char* ssid = "donre";
 
 WiFiUDP udp;
@@ -11,25 +18,32 @@ unsigned int localPort = 8888;
 
 void wifiSetup() {
     WiFi.softAP(ssid);
+    Serial.print("WiFi AP started. IP address: ");
+    Serial.println(WiFi.softAPIP());
+
     udp.begin(localPort);
+    Serial.print("UDP server started on port: ");
+    Serial.println(localPort);
 }
 
-void recieveUDPCommand() {
+bool receiveUDPCommand(udpPacket& receivedPacket) {
     int packetSize = udp.parsePacket();
 
     if (packetSize) {
-        char incomingPacket[255];
-        int len = udp.read(incomingPacket, 255);
+        if (packetSize >= sizeof(udpPacket)) {
+            int len = udp.read((char*)&receivedPacket, sizeof(udpPacket));
 
-        if (len > 0) {
-            Serial.print("Received Packet: ");
-            for (int i = 0; i < len; i++) {
-                Serial.print(incomingPacket[i], HEX);
-                Serial.print(" ");
-            }
-            Serial.println();
+            // monitoring command, can be commented in/out as needed
+            // if (len > 0) { Serial.print("Throttle: "); Serial.print(receivedPacket.throttle); Serial.print(", Roll: "); Serial.print(receivedPacket.roll, 4); Serial.print(", Pitch: "); Serial.print(receivedPacket.pitch, 4); Serial.print(", Yaw: "); Serial.println(receivedPacket.yaw, 4); }
+
+            return len > 0; // return true if data is successfully read
+        } else {
+            Serial.println("Received packet too small");
         }
     }
+    
+    return false; // return false if no packet was received or if it was invalid
 }
+
 
 #endif

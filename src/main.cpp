@@ -13,6 +13,7 @@
 #include "communication.h"
 
 SemaphoreHandle_t sensorMutex;
+SemaphoreHandle_t controlPacketMutex;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // SETUP
@@ -23,7 +24,8 @@ void setup() {
 	Serial.begin(115200);
 	delay(3000); // small delay to allow serial monitor to set up
 
-	sensorMutex = xSemaphoreCreateMutex();
+	sensorMutex 		= xSemaphoreCreateMutex();
+	controlPacketMutex 	= xSemaphoreCreateMutex();
 
 	wifiSetup();
 
@@ -95,10 +97,28 @@ void setup() {
 // CORE 1 LOOP
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 bool SYSTEM_FAILURE = false;
-uint8_t throttle = 200;
 constexpr unsigned long LOOP_INTERVAL = 5000; // 5ms is a 200 Hz delay for the PID system
 
+// this is a variable that core 0 writes to when it recieves a packet
+// core 1 uses setpoint data from this packet to make adjustments to the drone orientation via the
+// PID functions
+udpPacket control_packet;
+
 void loop() {
+	// this collects info from control_packet so its memory safe
+	udpPacket local_control_packet;
+
+	// read of control_packet
+	if (xSemaphoreTake(controlPacketMutex, 0)) {	// 0 means dont wait if its taken
+		local_control_packet = control_packet;
+		xSemaphoreGive(controlPacketMutex); // release packet mutex
+	}
+	// basically if the mutex is in use it uses previous packet data until it can read more
+
+	// Serial.print("Roll Setpoint: "); Serial.print(local_control_packet.roll); Serial.print(" | ");
+	// Serial.print("Pitch Setpoint: "); Serial.print(local_control_packet.pitch); Serial.print(" | ");
+	// Serial.print("Throttle: "); Serial.print(local_control_packet.throttle);
+
 	unsigned long  startTime = micros();
 
 	// check if a failure has been detected
@@ -109,8 +129,8 @@ void loop() {
 
 	// calculate PID outputs if the sensor data is safe to access (not being used)
 	if (xSemaphoreTake(sensorMutex, 10 / portTICK_PERIOD_MS)) {
-		rollOutput = calculatePID(ROLL_PID, rollErrors, SETPOINT_ROLL, orientations[0]);
-		pitchOutput = calculatePID(PITCH_PID, pitchErrors, SETPOINT_PITCH, orientations[1]);
+		rollOutput 	= calculatePID(ROLL_PID, rollErrors, local_control_packet.roll, orientations[0]);
+		pitchOutput = calculatePID(PITCH_PID, pitchErrors, local_control_packet.pitch, orientations[1]);
 		xSemaphoreGive(sensorMutex);
 	}
 	else return; // in case core 0 was using our data :(
@@ -119,12 +139,12 @@ void loop() {
 	float yawOutput = 0;
 
 	// changes the state of the motor speed arrays to PID corrected values
-	updateMotorsFromPID(rollOutput, pitchOutput, yawOutput, throttle);
+	updateMotorsFromPID(rollOutput, pitchOutput, yawOutput, local_control_packet.throttle);
 
 	// sends the new motor speeds to the PWM hardware
 	updateMotorSpeed();
 
-	// monitorRollPitchPID(rollOutput, pitchOutput);
+	monitorRollPitchPID(rollOutput, pitchOutput);
 	// monitorMotorSpeeds();
 
 	// maintains the 200 Hz clock speed
@@ -142,12 +162,22 @@ void loop() {
 void core0Process(void *parameter) {
 	while(true) {
 		if (!SYSTEM_FAILURE) {
+			udpPacket received_packet;
+
+			// only updates control_packet if a new packet was received
+			if(receiveUDPCommand(received_packet)) {
+				// if available, writes newly recieved packet to global control_packet variable
+				if(xSemaphoreTake(controlPacketMutex, 10 / portTICK_PERIOD_MS)) {
+					control_packet = received_packet;
+					xSemaphoreGive(controlPacketMutex);
+				}
+			}
+
 			if (xSemaphoreTake(sensorMutex, portMAX_DELAY)) {
 				readICM();
 				calculateOrientation();
 				xSemaphoreGive(sensorMutex);
 			}
-			recieveUDPCommand();
 		}
 		vTaskDelay(10 / portTICK_PERIOD_MS);
 	}
