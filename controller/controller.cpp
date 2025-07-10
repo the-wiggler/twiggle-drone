@@ -95,7 +95,8 @@ int main() {
         }
         if (space_pressed) {
             if (throttleLevel < 251) throttleLevel += 4;
-        }        
+        }
+        if (keyStates[SDL_SCANCODE_ESCAPE]) windowRunning = false;
 
         /////// CONVERT VECTORS TO SETPOINTS ///////////////////////////////////////////////////////
         // these are the new setpoint values that should be sent to the drone after recieving controller input

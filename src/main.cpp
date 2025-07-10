@@ -15,6 +15,16 @@
 SemaphoreHandle_t sensorMutex;
 SemaphoreHandle_t controlPacketMutex;
 
+// buffers for control packets
+udpPacket control_packet_buffer[2];
+volatile int active_buffer = 0;
+volatile int write_buffer = 1;
+
+// packet timeout
+unsigned long lastPacketTime = 0;
+const unsigned long PACKET_TIMEOUT_MS = 2000; // 2 second timeout
+bool packetTimeout = false;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // SETUP
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24,8 +34,16 @@ void setup() {
 	Serial.begin(115200);
 	delay(3000); // small delay to allow serial monitor to set up
 
+	// initialize mutexes for core 0 & 1 shared variables
 	sensorMutex 		= xSemaphoreCreateMutex();
 	controlPacketMutex 	= xSemaphoreCreateMutex();
+
+	// sets initial default value to control packet buffers
+	control_packet_buffer[0] = {0, 0, 0, 0};
+	control_packet_buffer[1] = {0, 0, 0, 0};
+
+	lastPacketTime = millis();
+	packetTimeout = false;
 
 	wifiSetup();
 
@@ -105,12 +123,25 @@ constexpr unsigned long LOOP_INTERVAL = 5000; // 5ms is a 200 Hz delay for the P
 udpPacket control_packet;
 
 void loop() {
+	if (millis() - lastPacketTime > PACKET_TIMEOUT_MS && lastPacketTime != 0) {
+		if(!packetTimeout) {
+			setAllMotorSpeed(0);
+
+			Serial.println("PACKET TIMEOUT - MOTORS KILLED");
+			packetTimeout = true;
+		}
+		return;
+	}
+
+	// restores motor control if a packet has been received 
+	if (packetTimeout) packetTimeout = false;
+
 	// this collects info from control_packet so its memory safe
 	udpPacket local_control_packet;
 
 	// read of control_packet
 	if (xSemaphoreTake(controlPacketMutex, 0)) {	// 0 means dont wait if its taken
-		local_control_packet = control_packet;
+		local_control_packet = control_packet_buffer[active_buffer];
 		xSemaphoreGive(controlPacketMutex); // release packet mutex
 	}
 	// basically if the mutex is in use it uses previous packet data until it can read more
@@ -144,8 +175,8 @@ void loop() {
 	// sends the new motor speeds to the PWM hardware
 	updateMotorSpeed();
 
-	monitorRollPitchPID(rollOutput, pitchOutput);
-	//monitorMotorSpeeds();
+	//monitorRollPitchPID(rollOutput, pitchOutput);
+	monitorMotorSpeeds();
 
 	// maintains the 200 Hz clock speed
 	unsigned long elapsedTime = micros() - startTime;
@@ -166,11 +197,20 @@ void core0Process(void *parameter) {
 
 			// only updates control_packet if a new packet was received
 			if(receiveUDPCommand(received_packet)) {
+				control_packet_buffer[write_buffer] = received_packet;
+
+				// responsible for keeping track of connection status
+				lastPacketTime = millis();
+				packetTimeout = false;
+
 				// if available, writes newly recieved packet to global control_packet variable
-				if(xSemaphoreTake(controlPacketMutex, 10 / portTICK_PERIOD_MS)) {
-					control_packet = received_packet;
+				if(xSemaphoreTake(controlPacketMutex, 3 / portTICK_PERIOD_MS)) {
+					int temp = active_buffer;
+					active_buffer = write_buffer;
+					write_buffer = temp;
 					xSemaphoreGive(controlPacketMutex);
 				}
+				// if the mutex cant be written to, the new packet will be used next time!
 			}
 
 			if (xSemaphoreTake(sensorMutex, portMAX_DELAY)) {
