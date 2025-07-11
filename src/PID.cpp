@@ -10,8 +10,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // PID Coefficients (change for tuning)
-PID ROLL_PID 	{ 0.6, 0.02, 0.01 };
-PID PITCH_PID { 0.6, 0.02, 0.01 };
+PID ROLL_PID 	{ 0.4, 0.4, 0.0001 };
+PID PITCH_PID { 0.4, 0.4, 0.0001 };
 PID YAW_PID	{ 1.0, 0.5, 0.01 };
 
 // stores error states of an iteration so the program can bring the state closer to setpoints
@@ -22,6 +22,15 @@ PIDErrors yawErrors 	{ 0, 0, 0, 0 };
 constexpr float INTEGRAL_MAX = 10;
 constexpr float INTEGRAL_MIN = -10;
 
+void resetPID() {
+    rollErrors.integral = 0;
+    rollErrors.previousError = 0;
+    pitchErrors.integral = 0;
+    pitchErrors.previousError = 0;
+    yawErrors.integral = 0;
+    yawErrors.previousError = 0;
+}
+
 float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, float currentState) {
 	unsigned long currentTime = millis();
 
@@ -30,6 +39,11 @@ float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, floa
 	
 	// calculate current error
 	errors.currentError = setpoint - currentState;
+
+	if ((errors.currentError > 0 && errors.previousError < 0) || 
+		(errors.currentError < 0 && errors.previousError > 0)) {
+        errors.integral = 0;
+    }
 
 	// calcualte integral
 	errors.integral += errors.currentError * deltaTime;

@@ -11,6 +11,7 @@ void monitorMotorSpeeds() {
 	Serial.print(motorSpeed[MOTOR_FR]); Serial.print(" | RL: "); Serial.print(motorSpeed[MOTOR_RL]);
 	Serial.print(" | RR: "); Serial.print(motorSpeed[MOTOR_RR]); Serial.print("     ");
 }
+
 void monitorRollPitchPID(float rollOutput, float pitchOutput) {
 	static unsigned long lastUpdateTime = 0; // Tracks the last time the Serial output was updated
 	unsigned long currentTime = millis();
@@ -24,6 +25,24 @@ void monitorRollPitchPID(float rollOutput, float pitchOutput) {
 
 		lastUpdateTime = currentTime;
 	}
+}
+
+void logData(float rollPID, float pitchPID) {
+	Serial.print(orientations[0]); //roll
+	Serial.print(",");
+	Serial.print(rollPID); //roll pid
+	Serial.print(",");
+	Serial.print(orientations[1]); //pitch
+	Serial.print(",");
+	Serial.print(pitchPID); //pitch pid
+	Serial.print(",");
+	Serial.print(motorSpeed[MOTOR_FL]);
+	Serial.print(",");
+	Serial.print(motorSpeed[MOTOR_FR]);
+	Serial.print(",");
+	Serial.print(motorSpeed[MOTOR_RL]);
+	Serial.print(",");
+	Serial.println(motorSpeed[MOTOR_RR]);
 }
 
 #endif
