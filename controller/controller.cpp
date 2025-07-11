@@ -145,7 +145,7 @@ int main() {
 
         /////// TEXT //////////////////////////////////////////////////////////////////////
         
-        if (throttleLevel > 10) throttleLevel -= 2;
+        if (throttleLevel > motorIdleSpeed) throttleLevel -= 2;
         SDL_RenderPresent(renderer);
         SDL_Delay(32);
 

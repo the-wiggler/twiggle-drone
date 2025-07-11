@@ -23,7 +23,7 @@ struct udpPacket {
     float yaw;
 };
 
-constexpr uint8_t motorIdleSpeed = 50;
+constexpr uint8_t motorIdleSpeed = 25;
 
 SDL_Window* window = SDL_CreateWindow("Drone Controller", 1000, 1000, SDL_WINDOW_RESIZABLE);
 SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
