@@ -10,17 +10,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // PID Coefficients (change for tuning)
-PID ROLL_PID 	{ 0.4, 0.4, 0.0001 };
-PID PITCH_PID { 0.4, 0.4, 0.0001 };
-PID YAW_PID	{ 1.0, 0.5, 0.01 };
+PID ROLL_PID	{ 1.2, 0.3, 0.0000 };
+PID PITCH_PID	{ 1.2, 0.3, 0.0000 };
+PID YAW_PID		{ 1.0, 0.5, 0.01 };
 
 // stores error states of an iteration so the program can bring the state closer to setpoints
 PIDErrors rollErrors 	{ 0, 0, 0, 0 };
 PIDErrors pitchErrors 	{ 0, 0, 0, 0 };
 PIDErrors yawErrors 	{ 0, 0, 0, 0 };
 
-constexpr float INTEGRAL_MAX = 10;
-constexpr float INTEGRAL_MIN = -10;
+constexpr float INTEGRAL_MAX = 1.0;
+constexpr float INTEGRAL_MIN = -1.0;
+constexpr float MOTOR_TRIM_SCALE = 50.0f;
 
 void resetPID() {
     rollErrors.integral = 0;
@@ -40,8 +41,8 @@ float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, floa
 	// calculate current error
 	errors.currentError = setpoint - currentState;
 
-	if ((errors.currentError > 0 && errors.previousError < 0) || 
-		(errors.currentError < 0 && errors.previousError > 0)) {
+	if ((errors.currentError > -0.1 && errors.previousError < 0.1) || 
+		(errors.currentError < 0.1 && errors.previousError > -0.1)) {
         errors.integral = 0;
     }
 
@@ -52,15 +53,15 @@ float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, floa
 	errors.integral = constrain(errors.integral, INTEGRAL_MIN, INTEGRAL_MAX);
 
 	// calculate derivative
-	float dt = 0;
+	float derivative = 0;
 	if (deltaTime > 0) {
-		dt = (errors.currentError - errors.previousError) / deltaTime;
+		derivative = (errors.currentError - errors.previousError) / deltaTime;
 	}
 
 	// calculate PID output
 	float output = 	(pidCoeffs.Kp * errors.currentError) + 
 					(pidCoeffs.Ki * errors.integral) +
-					(pidCoeffs.Kd * dt);
+					(pidCoeffs.Kd * derivative);
 
 	// update for next iteration
 	errors.previousError = errors.currentError;
@@ -70,9 +71,9 @@ float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, floa
 }
 
 void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, uint8_t throttle) {
-	int16_t rollTrim 	= 50 * rollOutput;
-	int16_t pitchTrim 	= 50 * pitchOutput;
-	int16_t yawTrim 	= 50 * yawOutput;
+	int16_t rollTrim 	= MOTOR_TRIM_SCALE * rollOutput;
+	int16_t pitchTrim 	= MOTOR_TRIM_SCALE * pitchOutput;
+	int16_t yawTrim 	= MOTOR_TRIM_SCALE * yawOutput;
 
 	int16_t speedFL = throttle + pitchTrim + rollTrim - yawTrim;
 	int16_t speedFR = throttle + pitchTrim - rollTrim + yawTrim;

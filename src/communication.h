@@ -16,7 +16,7 @@ const char* ssid = "donre";
 WiFiUDP udp;
 unsigned int localPort = 8888;
 
-void wifiSetup() {
+inline void wifiSetup() {
     WiFi.softAP(ssid);
     Serial.print("WiFi AP started. IP address: ");
     Serial.println(WiFi.softAPIP());
@@ -26,7 +26,7 @@ void wifiSetup() {
     Serial.println(localPort);
 }
 
-bool receiveUDPCommand(udpPacket& receivedPacket) {
+inline bool receiveUDPCommand(udpPacket& receivedPacket) {
     int packetSize = udp.parsePacket();
 
     if (packetSize) {

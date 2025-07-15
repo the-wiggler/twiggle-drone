@@ -21,6 +21,27 @@ float orientations[3] 	= { 0, 0, 0 };  // array that holds angular orientation v
 
 // IMPORTANT: for the Adafruit ICM20948 X is read as pitch, Y as roll, and Z as yaw
 
+
+void initializeSensors() {
+	for (int i = 0; i < 5; i++) {
+		if (icm.begin_I2C()) {
+			Serial.println("ICM20948 found!");
+			break;
+		}
+		Serial.println("Failed to connect to ICM20948. Retrying...");
+		delay(1000);
+	}
+	if (!icm.begin_I2C()) {
+		Serial.println("ERROR: Failed to connect to ICM20948");
+	}
+	// for some reason it sometimes doesnt connect on the first try...idk why???
+
+	icm.setAccelRateDivisor(0); 	// maximum accelerometer rate
+	icm.setGyroRateDivisor(0); 		// maximum gyroscope rate
+
+	Serial.println("Sensors initialized.");
+}
+
 // function to place sensor data in their respective arrays. Run this to update data
 void readICM() {
 	icm.getEvent(&accel, &gyro, &temp, &mag);

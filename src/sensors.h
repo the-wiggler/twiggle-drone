@@ -14,6 +14,7 @@ extern float accelData[3];
 extern float angularV[3];
 extern float orientations[3];
 
+void initializeSensors();
 void readICM();
 void calculateOrientation();
 

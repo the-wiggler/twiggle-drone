@@ -5,6 +5,7 @@
 
 extern uint8_t motorSpeed[4];
 
+void initializeMotors();
 void updateMotorSpeed();
 void setAllMotorSpeed(uint8_t speed);
 void emergencyStop();

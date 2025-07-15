@@ -6,13 +6,13 @@
 #include "sensors.h"
 #include "motors.h"
 
-void monitorMotorSpeeds() {
+inline void monitorMotorSpeeds() {
 	Serial.print("\rFL: "); Serial.print(motorSpeed[MOTOR_FL]); Serial.print(" | FR: ");
 	Serial.print(motorSpeed[MOTOR_FR]); Serial.print(" | RL: "); Serial.print(motorSpeed[MOTOR_RL]);
 	Serial.print(" | RR: "); Serial.print(motorSpeed[MOTOR_RR]); Serial.print("     ");
 }
 
-void monitorRollPitchPID(float rollOutput, float pitchOutput) {
+inline void monitorRollPitchPID(float rollOutput, float pitchOutput) {
 	static unsigned long lastUpdateTime = 0; // Tracks the last time the Serial output was updated
 	unsigned long currentTime = millis();
 
@@ -27,7 +27,7 @@ void monitorRollPitchPID(float rollOutput, float pitchOutput) {
 	}
 }
 
-void logData(float rollPID, float pitchPID) {
+inline void logData(float rollPID, float pitchPID) {
 	Serial.print(orientations[0]); //roll
 	Serial.print(",");
 	Serial.print(rollPID); //roll pid

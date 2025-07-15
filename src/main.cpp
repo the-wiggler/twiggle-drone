@@ -3,7 +3,6 @@
 #include <Adafruit_ICM20948.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
-#include <cmath>
 
 #include "config.h"
 #include "motors.h"
@@ -32,6 +31,13 @@ void core0Process(void *parameter);
 
 void setup() {
 	Serial.begin(115200);
+
+	// potential fix to motors running a small amount when the battery gives initial power
+	digitalWrite(MOTOR_FL_PIN, LOW);
+	digitalWrite(MOTOR_FR_PIN, LOW);
+	digitalWrite(MOTOR_RL_PIN, LOW);
+	digitalWrite(MOTOR_RR_PIN, LOW);
+
 	delay(3000); // small delay to allow serial monitor to set up
 
 	// initialize mutexes for core 0 & 1 shared variables
@@ -47,48 +53,8 @@ void setup() {
 
 	wifiSetup();
 
-	/////// MOTOR INITIALIZATION ///////////////////////////////////////////////////////////////////
-	// front left motor
-	ledcSetup(MOTOR_FL, PWM_FREQUENCY, PWM_RESOLUTION);
-	ledcAttachPin(MOTOR_FL_PIN, MOTOR_FL);
-
-	//front right motor
-	ledcSetup(MOTOR_FR, PWM_FREQUENCY, PWM_RESOLUTION);
-	ledcAttachPin(MOTOR_FR_PIN, MOTOR_FR);
-
-	// rear left motor
-	ledcSetup(MOTOR_RL, PWM_FREQUENCY, PWM_RESOLUTION);
-	ledcAttachPin(MOTOR_RL_PIN, MOTOR_RL);
-
-	// rear right motor
-	ledcSetup(MOTOR_RR, PWM_FREQUENCY, PWM_RESOLUTION);
-	ledcAttachPin(MOTOR_RR_PIN, MOTOR_RR);
-
-	// set all motor speeds to 0 at startup
-	ledcWrite(MOTOR_FL, 0);
-	ledcWrite(MOTOR_FR, 0);
-	ledcWrite(MOTOR_RL, 0);
-	ledcWrite(MOTOR_RR, 0);
-
-	Serial.println("Motors initialized.");
-	////////////////////////////////////////////////////////////////////////////////////////////////
-
-	/////// SENSOR INITIALIZATION //////////////////////////////////////////////////////////////////
-	for (int i = 0; i < 11; i++) {
-		if (icm.begin_I2C()) {
-			Serial.println("ICM20948 found!");
-			break;
-		}
-		Serial.println("Failed to connect to ICM20948. Retrying...");
-		delay(1000);
-	}
-	// for some reason it sometimes doesnt connect on the first try...idk why???
-
-	icm.setAccelRateDivisor(0); 	// maximum accelerometer rate
-	icm.setGyroRateDivisor(0); 		// maximum gyroscope rate
-
-	Serial.println("Sensors initialized.");
-	////////////////////////////////////////////////////////////////////////////////////////////////
+	initializeMotors();
+	initializeSensors();
 
 	/////// CORE TASK SETUP ////////////////////////////////////////////////////////////////////////
 	xTaskCreatePinnedToCore(
@@ -102,7 +68,7 @@ void setup() {
 	);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	// wait 3 seconds
+	// wait
 	Serial.println("Startup...");
 	delay(1000);
 }
