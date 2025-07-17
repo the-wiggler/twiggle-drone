@@ -1,5 +1,5 @@
 ## Twiggle Drone Project
-An open-source quadcopter built using Arduino, and capable of stable flight controlled via a WiFi connection.
+An from-scratch quadcopter built using Arduino, and capable of stable flight controlled via a WiFi connection. 
 
 ---
 
@@ -7,7 +7,7 @@ An open-source quadcopter built using Arduino, and capable of stable flight cont
 - Built with **Arduino Nano ESP32**
 - 4x Brushless motors with PWM control
 - ICM20948 for attitude sensing
-- PID stabilization
+- Custom PID stabilization program
 - Manual flight via a GUI computer program (UDP over WiFi)
 
 ## Components
