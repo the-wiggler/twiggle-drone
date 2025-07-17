@@ -40,7 +40,7 @@ twiggle-drone/<br>
     - connect to the drone's WiFi network before running the program
     - run the program, and the drones motors should begin at an idle state. The drone is ready to fly
 ### Schematic:
-![Logo](assets/schematic.png)
+<img src="assets/schematic.png" alt="schematic" width="40%">
 
 ## Building the Firmware
 1. Install [Arduino IDE](https://www.arduino.cc/en/software) or use PlatformIO
