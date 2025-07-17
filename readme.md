@@ -22,13 +22,13 @@ An open-source quadcopter built using Arduino, and capable of stable flight cont
 | GNB 3.8V 520mAh LiPo Battery (80C) | Battery                        | 1        | [Link](https://www.amazon.com/dp/B07QC17GLT?ref=ppx_yo2ov_dt_b_fed_asin_title) |
 
 ## Project Structure
-twiggle-drone/
-├── src/
-│   ├── main.cpp
-|   └── // arduino files (to be uploaded to arduino)
-├── controller/
-│   ├── main.cpp
-|   └── // controller files (to be run on local machine)
+twiggle-drone/<br>
+├── src/<br>
+│   ├── main.cpp<br>
+│   └── // arduino files (to be uploaded to arduino)<br>
+├── controller/<br>
+│   ├── main.cpp<br>
+│   └── // controller files (to be run on local machine)<br>
 
 ## Getting Started
 1. **Construct the drone**
