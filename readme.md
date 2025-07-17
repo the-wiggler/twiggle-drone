@@ -20,6 +20,7 @@ An open-source quadcopter built using Arduino, and capable of stable flight cont
 | N-Channel MOSFET                | Used for PWM motor control       | 4        | [Link](https://www.digikey.com/en/products/detail/infineon-technologies/IRLZ44NPBF/811808) |
 | 8520 Coreless Brushed Motors    | Drone motors/rotors              | 4        | [Link](https://www.amazon.com/dp/B076M7G24G?ref=ppx_yo2ov_dt_b_fed_asin_title) |
 | GNB 3.8V 520mAh LiPo Battery (80C) | Battery                        | 1        | [Link](https://www.amazon.com/dp/B07QC17GLT?ref=ppx_yo2ov_dt_b_fed_asin_title) |
+| Drone Body                      | 3D printed body                   | 1        | [link](about:blank) |
 
 ## Project Structure
 twiggle-drone/<br>
@@ -38,6 +39,8 @@ twiggle-drone/<br>
     - this program should be run on a computer with the ability to connect to WiFi networks
     - connect to the drone's WiFi network before running the program
     - run the program, and the drones motors should begin at an idle state. The drone is ready to fly
+### Schematic:
+![Logo](assets/schematic.png)
 
 ## Building the Firmware
 1. Install [Arduino IDE](https://www.arduino.cc/en/software) or use PlatformIO
