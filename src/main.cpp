@@ -11,7 +11,6 @@
 #include "debug.h"
 #include "communication.h"
 
-SemaphoreHandle_t sensorMutex;
 SemaphoreHandle_t controlPacketMutex;
 
 // buffers for control packets
@@ -41,7 +40,6 @@ void setup() {
 	delay(3000); // small delay to allow serial monitor to set up
 
 	// initialize mutexes for core 0 & 1 shared variables
-	sensorMutex 		= xSemaphoreCreateMutex();
 	controlPacketMutex 	= xSemaphoreCreateMutex();
 
 	// sets initial default value to control packet buffers
@@ -89,6 +87,8 @@ constexpr unsigned long LOOP_INTERVAL = 5000; // 5ms is a 200 Hz delay for the P
 udpPacket control_packet;
 
 void loop() {
+
+	// checks if a packet has been received from the controller recently, if not, it kills motors
 	if (millis() - lastPacketTime > PACKET_TIMEOUT_MS && lastPacketTime != 0) {
 		if(!packetTimeout) {
 			setAllMotorSpeed(0);
@@ -113,26 +113,24 @@ void loop() {
 		xSemaphoreGive(controlPacketMutex); // release packet mutex
 	}
 	// basically if the mutex is in use it uses previous packet data until it can read more
-
-	//Serial.print("\rRoll Setpoint: "); Serial.print(local_control_packet.roll); Serial.print(" | ");
-	//Serial.print("Pitch Setpoint: "); Serial.print(local_control_packet.pitch); Serial.print(" | ");
-	//Serial.print("Throttle: "); Serial.print(local_control_packet.throttle);
-
-	unsigned long  startTime = micros();
-
-	// check if a failure has been detected
-	// if (millis() > 15000) emergencyStop(); // timer to run the program until a cutoff time
+	
+	// skips motor control if a system failure is detected
 	if (SYSTEM_FAILURE) return;
+
+	unsigned long  startTime = micros();	
+
+	// reads the gyroscope data and writes it to sensor arrays
+	readICM();
+
+	// calculates the orientation of the drone (in radians) based off of stored sensor data
+	calculateOrientation();
+
 
 	float rollOutput, pitchOutput;
 
 	// calculate PID outputs if the sensor data is safe to access (not being used)
-	if (xSemaphoreTake(sensorMutex, 10 / portTICK_PERIOD_MS)) {
-		rollOutput 	= calculatePID(ROLL_PID, rollErrors, local_control_packet.roll, orientations[0]);
-		pitchOutput = calculatePID(PITCH_PID, pitchErrors, local_control_packet.pitch, orientations[1]);
-		xSemaphoreGive(sensorMutex);
-	}
-	else return; // in case core 0 was using our data :(
+	rollOutput 	= calculatePID(ROLL_PID, rollErrors, local_control_packet.roll, orientations[0]);
+	pitchOutput = calculatePID(PITCH_PID, pitchErrors, local_control_packet.pitch, orientations[1]);
 
 	// placeholder since im lazy and havent implemented yaw stuff yet
 	float yawOutput = 0;
@@ -179,12 +177,6 @@ void core0Process(void *parameter) {
 					xSemaphoreGive(controlPacketMutex);
 				}
 				// if the mutex cant be written to, the new packet will be used next time!
-			}
-
-			if (xSemaphoreTake(sensorMutex, portMAX_DELAY)) {
-				readICM();
-				calculateOrientation();
-				xSemaphoreGive(sensorMutex);
 			}
 		}
 	}
