@@ -86,6 +86,13 @@ void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, u
 	motorSpeed[MOTOR_RR] = constrain(speedRR, 0, 255);
 }
 
+void initializePID() {
+    unsigned long currentTime = millis();
+    rollErrors.lastTime = currentTime;
+    pitchErrors.lastTime = currentTime;
+    yawErrors.lastTime = currentTime;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END PID FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////////////////////////

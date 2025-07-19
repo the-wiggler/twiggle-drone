@@ -69,6 +69,8 @@ void setup() {
 	// wait
 	Serial.println("Startup...");
 	delay(1000);
+
+	initializePID();
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END SETUP
@@ -179,6 +181,7 @@ void core0Process(void *parameter) {
 				// if the mutex cant be written to, the new packet will be used next time!
 			}
 		}
+		vTaskDelay(10 / portTICK_PERIOD_MS); 
 	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
