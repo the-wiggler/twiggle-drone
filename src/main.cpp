@@ -12,6 +12,7 @@
 #include "communication.h"
 
 SemaphoreHandle_t controlPacketMutex;
+SemaphoreHandle_t pidPacketMutex;
 
 // buffers for control packets
 udpPacket control_packet_buffer[2];
@@ -41,6 +42,7 @@ void setup() {
 
 	// initialize mutexes for core 0 & 1 shared variables
 	controlPacketMutex 	= xSemaphoreCreateMutex();
+	pidPacketMutex 		= xSemaphoreCreateMutex();
 
 	// sets initial default value to control packet buffers
 	control_packet_buffer[0] = {0, 0, 0, 0};
@@ -87,6 +89,7 @@ constexpr unsigned long LOOP_INTERVAL = 5000; // 5ms is a 200 Hz delay for the P
 // core 1 uses setpoint data from this packet to make adjustments to the drone orientation via the
 // PID functions
 udpPacket control_packet;
+udpPacket pid_packet;
 
 void loop() {
 
@@ -107,14 +110,17 @@ void loop() {
 	if (packetTimeout) packetTimeout = false;
 
 	// this collects info from control_packet so its memory safe
-	udpPacket local_control_packet;
 
+	udpPacket local_control_packet;
 	// read of control_packet
 	if (xSemaphoreTake(controlPacketMutex, 0)) {	// 0 means dont wait if its taken
 		local_control_packet = control_packet_buffer[active_buffer];
 		xSemaphoreGive(controlPacketMutex); // release packet mutex
 	}
-	// basically if the mutex is in use it uses previous packet data until it can read more
+
+	// read of pid_packet. this is so one can adjust the PID values via the controller on the fly
+	// for tuning and debug purposes. ONLY ACTIVATE IF YOU WANT TO TUNE PID VALUES!!!
+	receivePidDataPacket(pidPacketMutex, pid_packet);
 	
 	// skips motor control if a system failure is detected
 	if (SYSTEM_FAILURE) return;
@@ -164,7 +170,7 @@ void core0Process(void *parameter) {
 			udpPacket received_packet;
 
 			// only updates control_packet if a new packet was received
-			if(receiveUDPCommand(received_packet)) {
+			if (receiveUDPCommand(received_packet) && received_packet.identifier == 'c') {
 				control_packet_buffer[write_buffer] = received_packet;
 
 				// responsible for keeping track of connection status
@@ -172,13 +178,19 @@ void core0Process(void *parameter) {
 				packetTimeout = false;
 
 				// if available, writes newly recieved packet to global control_packet variable
-				if(xSemaphoreTake(controlPacketMutex, 3 / portTICK_PERIOD_MS)) {
+				if (xSemaphoreTake(controlPacketMutex, 3 / portTICK_PERIOD_MS)) {
 					int temp = active_buffer;
 					active_buffer = write_buffer;
 					write_buffer = temp;
 					xSemaphoreGive(controlPacketMutex);
 				}
 				// if the mutex cant be written to, the new packet will be used next time!
+			}
+			else if (received_packet.identifier == 'p') {
+				if(xSemaphoreTake(pidPacketMutex, 3 / portTICK_PERIOD_MS)) {
+					pid_packet = received_packet;
+					xSemaphoreGive(pidPacketMutex);
+				}
 			}
 		}
 		vTaskDelay(10 / portTICK_PERIOD_MS); 

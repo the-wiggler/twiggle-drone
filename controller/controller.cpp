@@ -14,6 +14,8 @@
 TTF_Font* font = nullptr;
 
 // hi there if you're reading this :)
+// im sorry because this controller program is very poorly formatted im just kind of throwing it together
+// good luck!
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MAIN
@@ -42,26 +44,92 @@ int main() {
 
     // drone setup
     uint8_t throttle = motorIdleSpeed; // sets motor speed to idle (this value should match set idle in drone code)
+    
+    // Clickable parameter boxes
+    float proportional = 0.0f;
+    float integral = 0.0f;
+    float derivative = 0.0f;
 
     ///////////////////////////////////////////////////////////////////////  /  /  /  /  /  ///////
     /////// MAIN WINDOW LOOP                                        ////////////////////////////////
     ///////////////////////////////////////////////////////////////////////  /  /  /  /  /  ///////
     bool windowRunning = true;
     bool motors_killed = false;
+    bool pid_tuning = false; // set to true if you want to modify PID data via UDP (dangerous)
     SDL_Event e;
 
     uint8_t throttleLevel = motorIdleSpeed;
 
     while (windowRunning) {
+        bool box_clicked = false;
         
         SDL_SetRenderDrawColor(renderer, 37,37,37,255);
         SDL_RenderClear(renderer);
         setControlOutline();
 
+        // get window size for positioning the red box
+        int windowWidth, windowHeight;
+        SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+        float redBoxX = windowWidth - RED_BOX_SIZE - RED_BOX_MARGIN;
+        float redBoxY = windowHeight - RED_BOX_SIZE - RED_BOX_MARGIN;
+
+        // render red box for PID tuning toggle
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_FRect redBox = {redBoxX, redBoxY, RED_BOX_SIZE, RED_BOX_SIZE};
+        SDL_RenderFillRect(renderer, &redBox);
+
+        // if the red box is clicked do all the things
+        if (pid_tuning) renderParameterBoxes(proportional, integral, derivative, font, renderer);
+
         // check for any SDL window events
         while  (SDL_PollEvent(&e)) {
             if (e.type == SDL_EVENT_QUIT) {
                 windowRunning = false;
+            }
+            else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                if (e.button.button == SDL_BUTTON_LEFT) {
+                    float mouseX = e.button.x;
+                    float mouseY = e.button.y;
+
+                    // check if red box was clicked
+                    if (mouseX >= redBoxX && mouseX <= redBoxX + RED_BOX_SIZE &&
+                        mouseY >= redBoxY && mouseY <= redBoxY + RED_BOX_SIZE) {
+                        pid_tuning = true;
+                        std::cout << "PID Tuning enabled" << std::endl;
+                    }
+
+                    for (int i = 0; i < 3; i++) {
+                        float boxX = BOX_START_X + i * (BOX_WIDTH + BOX_SPACING);
+                        float boxY = BOX_START_Y;
+                        if (pid_tuning) {
+                            if (mouseX >= boxX && mouseX <= boxX + BOX_WIDTH &&
+                                mouseY >= boxY && mouseY <= boxY + BOX_HEIGHT) {
+                                if (i == 0) proportional += 0.1f;
+                                else if (i == 1) integral += 0.1f;
+                                else if (i == 2) derivative += 0.001f;
+                                box_clicked = true;
+                            }
+                        }
+                    }
+                }
+                if (e.button.button == SDL_BUTTON_RIGHT) {
+                    float mouseX = e.button.x;
+                    float mouseY = e.button.y;
+
+                    for (int i = 0; i < 3; i++) {
+                        float boxX = BOX_START_X + i * (BOX_WIDTH + BOX_SPACING);
+                        float boxY = BOX_START_Y;
+                        if (pid_tuning) {
+                            if (mouseX >= boxX && mouseX <= boxX + BOX_WIDTH &&
+                                mouseY >= boxY && mouseY <= boxY + BOX_HEIGHT) {
+                                if (i == 0) proportional -= 0.1f;
+                                else if (i == 1) integral -= 0.1f;
+                                else if (i == 2) derivative -= 0.001f;
+                                box_clicked = true;
+                        }
+                        }
+                    }
+                }
             }
         }
 
@@ -72,6 +140,8 @@ int main() {
         bool a_pressed = keyStates[SDL_SCANCODE_A];
         bool d_pressed = keyStates[SDL_SCANCODE_D];
         bool space_pressed = keyStates[SDL_SCANCODE_SPACE];
+        bool shift_pressed = keyStates[SDL_SCANCODE_LSHIFT];
+        bool control_pressed = keyStates[SDL_SCANCODE_LCTRL];
 
         // these are the components of the direction vector instruction to be converted into setpoint measurements
         // (in radians) that will be sent to the drone
@@ -96,8 +166,11 @@ int main() {
             control_vectors.roll = 127; // set a control vector component to RIGHT direction
             moveRight();
         }
-        if (space_pressed) {
+        if (shift_pressed) {
             if (throttleLevel < 251) throttleLevel += 4;
+        }
+        if (control_pressed) {
+            if (throttleLevel > 4) throttleLevel -= 4;
         }
         if (keyStates[SDL_SCANCODE_ESCAPE]) windowRunning = false;
         if (keyStates[SDL_SCANCODE_0]) {
@@ -117,16 +190,30 @@ int main() {
         // the first element is what to change the throttle to
         // the second and third element is what vector the drone should aim to change its direction of travel to
 
-        udpPacket packet = { throttleLevel, roll_setpoint, pitch_setpoint, yaw_setpoint };
+        udpPacket packet = { 'c', throttleLevel, roll_setpoint, pitch_setpoint, yaw_setpoint };
         int len = sizeof(packet);
         sendto(sock, (const char*)&packet, len, 0, (sockaddr*)&addr, sizeof(addr));
 
-        std::cout << "PACKET CONTENTS (hex): " 
-          << (int)packet.throttle 
-          << " " << packet.roll
-          << " " << packet.pitch 
-          << " " << packet.yaw
-          << std::dec << std::endl;  // Reset to decimal
+        if (box_clicked && pid_tuning) {
+            udpPacket pidPacket = { 'p', 0, proportional, integral, derivative };
+            int pidlen = sizeof(pidPacket);
+            sendto(sock, (const char*)&pidPacket, pidlen, 0, (sockaddr*)&addr, sizeof(addr));
+            std::cout << "PACKET CONTENTS: "
+                << pidPacket.identifier
+                << " " << (int)pidPacket.throttle 
+                << " " << pidPacket.roll
+                << " " << pidPacket.pitch 
+                << " " << pidPacket.yaw
+                << std::dec << std::endl;
+        }
+
+        std::cout << "PACKET CONTENTS: "
+            << packet.identifier
+            << " " << (int)packet.throttle 
+            << " " << packet.roll
+            << " " << packet.pitch 
+            << " " << packet.yaw
+            << std::dec << std::endl;  // Reset to decimal
 
 
         /////// THROTTLE TEXT //////////////////////////////////////////////////////////////////////
@@ -145,7 +232,6 @@ int main() {
 
         /////// TEXT //////////////////////////////////////////////////////////////////////
         
-        if (throttleLevel > motorIdleSpeed) throttleLevel -= 2;
         SDL_RenderPresent(renderer);
         SDL_Delay(32);
 

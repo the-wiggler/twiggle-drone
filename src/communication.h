@@ -5,6 +5,7 @@
 #include <WiFiUdp.h>
 
 struct udpPacket {
+    char identifier;
     uint8_t throttle;
     float roll;
     float pitch;
@@ -34,7 +35,7 @@ inline bool receiveUDPCommand(udpPacket& receivedPacket) {
             int len = udp.read((char*)&receivedPacket, sizeof(udpPacket));
 
             // monitoring command, can be commented in/out as needed
-            // if (len > 0) { Serial.print("Throttle: "); Serial.print(receivedPacket.throttle); Serial.print(", Roll: "); Serial.print(receivedPacket.roll, 4); Serial.print(", Pitch: "); Serial.print(receivedPacket.pitch, 4); Serial.print(", Yaw: "); Serial.println(receivedPacket.yaw, 4); }
+            //if (len > 0) { Serial.print("Throttle: "); Serial.print(receivedPacket.throttle); Serial.print(", Roll: "); Serial.print(receivedPacket.roll, 4); Serial.print(", Pitch: "); Serial.print(receivedPacket.pitch, 4); Serial.print(", Yaw: "); Serial.println(receivedPacket.yaw, 4); }
 
             return len > 0; // return true if data is successfully read
         } else {
