@@ -20,23 +20,16 @@ with open(csv_filename, 'w', newline='') as csvfile:
                 if line:
                     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
                     
-                    # Fix the data parsing issue
-                    # Replace problematic patterns where numbers are concatenated
-                    line_fixed = line.replace('20.00-0.21', '20.00,-0.21')
-                    line_fixed = line_fixed.replace('0.05,-25.76', '0.05,-25.76')
+                    data_values = line.split(',')
                     
-                    data_values = line_fixed.split(',')
-                    
-                    # Changed from 8 to 11 to match your CSV header (11 data columns)
-                    if len(data_values) == 11:
+                    if len(data_values) == 10:
                         print(f"Received: {line} at {timestamp}")
                         
                         row = [timestamp] + data_values
                         writer.writerow(row)
                         csvfile.flush() 
                     else:
-                        print(f"Incomplete data received ({len(data_values)} values): {line}")
-                        print(f"Parsed values: {data_values}")
+                        print(f"Incomplete data received: {line}")
                         
     except KeyboardInterrupt:
         print("Data collection stopped")

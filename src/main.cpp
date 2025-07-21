@@ -99,9 +99,9 @@ void loop() {
 			setAllMotorSpeed(0);
 			updateMotorSpeed();
 
-			Serial.println("PACKET TIMEOUT - MOTORS KILLED");
+			//Serial.println("PACKET TIMEOUT - MOTORS KILLED");
 			packetTimeout = true;
-			monitorMotorSpeeds();
+			//monitorMotorSpeeds();
 		}
 		return;
 	}
@@ -150,7 +150,7 @@ void loop() {
 	updateMotorSpeed();
 
 	//monitorRollPitchPID(rollOutput, pitchOutput);
-	monitorMotorSpeeds();
+	//monitorMotorSpeeds();
 	//logData(rollOutput, pitchOutput);
 
 	// maintains the 200 Hz clock speed
