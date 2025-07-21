@@ -6,7 +6,7 @@
 
 struct udpPacket {
     char identifier;
-    uint8_t throttle;
+    uint32_t throttle;
     float roll;
     float pitch;
     float yaw;

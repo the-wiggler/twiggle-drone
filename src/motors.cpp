@@ -5,7 +5,7 @@
 // MOTOR FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint8_t motorSpeed[4] = { 0, 0, 0, 0 };	// an array that holds the motor speed values to be enacted
+uint32_t motorSpeed[4] = { 0, 0, 0, 0 };	// an array that holds the motor speed values to be enacted
 										// on cycle 
 										
 void initializeMotors() {
@@ -43,7 +43,7 @@ void updateMotorSpeed() {
 }
 
 // function that changes the speeds of all motors
-void setAllMotorSpeed(uint8_t speed) {
+void setAllMotorSpeed(uint32_t speed) {
 	motorSpeed[MOTOR_FL] = speed;
 	motorSpeed[MOTOR_FR] = speed;
 	motorSpeed[MOTOR_RL] = speed;

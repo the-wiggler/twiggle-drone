@@ -3,11 +3,11 @@
 
 #include "config.h"
 
-extern uint8_t motorSpeed[4];
+extern uint32_t motorSpeed[4];
 
 void initializeMotors();
 void updateMotorSpeed();
-void setAllMotorSpeed(uint8_t speed);
+void setAllMotorSpeed(uint32_t speed);
 void emergencyStop();
 void testMotors();
 

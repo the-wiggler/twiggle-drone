@@ -29,14 +29,14 @@ inline void monitorRollPitchPID(float rollOutput, float pitchOutput) {
 	}
 }
 
-inline void logData(float rollPID, float pitchPID) {
+inline void logData(float rollOutput, float pitchOutput) {
 	Serial.print(orientations.roll); //roll
 	Serial.print(",");
-	Serial.print(rollPID); //roll pid
+	Serial.print(rollOutput); //roll pid
 	Serial.print(",");
 	Serial.print(orientations.pitch); //pitch
 	Serial.print(",");
-	Serial.print(pitchPID); //pitch pid
+	Serial.print(pitchOutput); //pitch pid
 	Serial.print(",");
 	Serial.print(motorSpeed[MOTOR_FL]);
 	Serial.print(",");
@@ -45,6 +45,11 @@ inline void logData(float rollPID, float pitchPID) {
 	Serial.print(motorSpeed[MOTOR_RL]);
 	Serial.print(",");
 	Serial.println(motorSpeed[MOTOR_RR]);
+	Serial.print(ROLL_PID.Kp); //roll pid
+	Serial.print(",");
+	Serial.print(ROLL_PID.Ki); //roll pid
+	Serial.print(",");
+	Serial.print(ROLL_PID.Kd); //roll pid
 }
 
 inline void receivePidDataPacket(SemaphoreHandle_t pidPacketMutex, udpPacket pid_packet) {

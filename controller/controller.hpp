@@ -19,18 +19,29 @@ struct controlVector {
 };
 struct udpPacket {
     char identifier;
-    uint8_t throttle;
+    uint32_t throttle;
     float roll;
     float pitch;
     float yaw;
 };
 
-constexpr uint8_t motorIdleSpeed = 25;
+constexpr uint32_t motorMaxSpeed = 1023; // max bit value
+constexpr uint32_t motorIdleSpeed = motorMaxSpeed * 0.25;
 
 SDL_Window* window = SDL_CreateWindow("Drone Controller", 1000, 1000, SDL_WINDOW_RESIZABLE);
 SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
 
-
+// function to convert throttle value to percentage
+uint32_t percentageToThrottle(float percentage) {
+    if (percentage <= 0.0f) {
+        return 0; 
+    }
+    if (percentage >= 100.0f) {
+        return motorMaxSpeed;
+    }
+    float range = motorMaxSpeed - motorIdleSpeed;
+    return motorIdleSpeed + (uint32_t)((percentage / 100.0f) * range);
+}
 
 void moveForward() {
     SDL_FRect upRect = {475, 75, 50, 100};
@@ -56,8 +67,6 @@ void moveRight() {
     SDL_RenderFillRect(renderer, &upRect);
 }
 
-
-
 void setControlOutline() {
     SDL_FRect outline1 = {475, 75, 50, 100};
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 50);
@@ -81,8 +90,6 @@ void setControlOutline() {
 float convertVectorToSetpoint(int8_t vectorInput) {
     return (vectorInput / 127) * MAX_DRONE_TILT;
 }
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // box dimensions and positions

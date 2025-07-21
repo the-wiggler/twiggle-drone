@@ -28,7 +28,7 @@ extern PIDErrors pitchErrors;
 extern PIDErrors yawErrors;
 
 float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, float currentState);
-void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, uint8_t throttle);
+void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, uint32_t throttle);
 void initializePID();
 
 #endif

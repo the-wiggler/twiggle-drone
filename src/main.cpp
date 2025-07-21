@@ -150,12 +150,12 @@ void loop() {
 	updateMotorSpeed();
 
 	//monitorRollPitchPID(rollOutput, pitchOutput);
-	//monitorMotorSpeeds();
+	monitorMotorSpeeds();
+	//logData(rollOutput, pitchOutput);
 
 	// maintains the 200 Hz clock speed
 	unsigned long elapsedTime = micros() - startTime;
 	if (elapsedTime < LOOP_INTERVAL) delayMicroseconds(LOOP_INTERVAL - elapsedTime); 
-	// apparently delayMicroseconds is a thing!
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END CORE 1

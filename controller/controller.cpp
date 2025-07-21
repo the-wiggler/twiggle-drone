@@ -43,10 +43,10 @@ int main() {
     inet_pton(AF_INET, "192.168.4.1", &addr.sin_addr);
 
     // drone setup
-    uint8_t throttle = motorIdleSpeed; // sets motor speed to idle (this value should match set idle in drone code)
+    float throttlePercent = 0.0f;
     
     // Clickable parameter boxes
-    float proportional = 0.0f;
+    float proportional = 50.0f;
     float integral = 0.0f;
     float derivative = 0.0f;
 
@@ -58,7 +58,7 @@ int main() {
     bool pid_tuning = false; // set to true if you want to modify PID data via UDP (dangerous)
     SDL_Event e;
 
-    uint8_t throttleLevel = motorIdleSpeed;
+    float throttleLevel = 0.0f;
 
     while (windowRunning) {
         bool box_clicked = false;
@@ -104,9 +104,9 @@ int main() {
                         if (pid_tuning) {
                             if (mouseX >= boxX && mouseX <= boxX + BOX_WIDTH &&
                                 mouseY >= boxY && mouseY <= boxY + BOX_HEIGHT) {
-                                if (i == 0) proportional += 1.0f;
-                                else if (i == 1) integral += 1.0f;
-                                else if (i == 2) derivative += 1.0f;
+                                if (i == 0) proportional += 10;
+                                else if (i == 1) integral += 5;
+                                else if (i == 2) derivative += 1;
                                 box_clicked = true;
                             }
                         }
@@ -122,9 +122,9 @@ int main() {
                         if (pid_tuning) {
                             if (mouseX >= boxX && mouseX <= boxX + BOX_WIDTH &&
                                 mouseY >= boxY && mouseY <= boxY + BOX_HEIGHT) {
-                                if (i == 0) proportional -= 1.0f;
-                                else if (i == 1) integral -= 1.0f;
-                                else if (i == 2) derivative -= 1.0f;
+                                if (i == 0) proportional -= 10;
+                                else if (i == 1) integral -= 5;
+                                else if (i == 2) derivative -= 1;
                                 box_clicked = true;
                         }
                         }
@@ -167,14 +167,16 @@ int main() {
             moveRight();
         }
         if (shift_pressed) {
-            if (throttleLevel < 251) throttleLevel += 4;
+            if (throttleLevel < 100.0f) throttleLevel += 1.0f;
+            if (throttleLevel > 100.0f) throttleLevel = 100.0f;
         }
         if (control_pressed) {
-            if (throttleLevel > 4) throttleLevel -= 4;
+            if (throttleLevel > 0.0f) throttleLevel -= 1.0f;
+            if (throttleLevel < 0.0f) throttleLevel = 0.0f;
         }
         if (keyStates[SDL_SCANCODE_ESCAPE]) windowRunning = false;
         if (keyStates[SDL_SCANCODE_0]) {
-            throttleLevel = 0;
+            throttleLevel = 0.0f;
             std::cout << "MOTORS KILLED!\n";
             motors_killed = true;
         } 
@@ -190,7 +192,7 @@ int main() {
         // the first element is what to change the throttle to
         // the second and third element is what vector the drone should aim to change its direction of travel to
 
-        udpPacket packet = { 'c', throttleLevel, roll_setpoint, pitch_setpoint, yaw_setpoint };
+        udpPacket packet = { 'c', percentageToThrottle(throttleLevel), roll_setpoint, pitch_setpoint, yaw_setpoint };
         int len = sizeof(packet);
         sendto(sock, (const char*)&packet, len, 0, (sockaddr*)&addr, sizeof(addr));
 
@@ -200,7 +202,7 @@ int main() {
             sendto(sock, (const char*)&pidPacket, pidlen, 0, (sockaddr*)&addr, sizeof(addr));
             std::cout << "PACKET CONTENTS: "
                 << pidPacket.identifier
-                << " " << (int)pidPacket.throttle 
+                << " " << pidPacket.throttle 
                 << " " << pidPacket.roll
                 << " " << pidPacket.pitch 
                 << " " << pidPacket.yaw
@@ -209,16 +211,15 @@ int main() {
 
         std::cout << "PACKET CONTENTS: "
             << packet.identifier
-            << " " << (int)packet.throttle 
+            << " " << packet.throttle 
             << " " << packet.roll
             << " " << packet.pitch 
             << " " << packet.yaw
             << std::dec << std::endl;  // Reset to decimal
 
-
         /////// THROTTLE TEXT //////////////////////////////////////////////////////////////////////
         std::stringstream throttleStream;
-        throttleStream << "Throttle level: " << static_cast<int>(throttleLevel);
+        throttleStream << "Throttle: " << std::fixed << std::setprecision(1) << throttleLevel << "%";
         std::string throttleText = throttleStream.str();
         SDL_Surface* throttleSurface = TTF_RenderText_Blended(font, throttleText.c_str(), throttleText.length(), whiteColor);
         SDL_Texture* throttleTexture = SDL_CreateTextureFromSurface(renderer, throttleSurface);

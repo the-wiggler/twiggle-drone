@@ -19,8 +19,8 @@ PIDErrors rollErrors 	{ 0, 0, 0, 0 };
 PIDErrors pitchErrors 	{ 0, 0, 0, 0 };
 PIDErrors yawErrors 	{ 0, 0, 0, 0 };
 
-constexpr float INTEGRAL_MAX = 1.0;
-constexpr float INTEGRAL_MIN = -1.0;
+constexpr float INTEGRAL_MAX = 20.0;
+constexpr float INTEGRAL_MIN = -20.0;
 
 void resetPID() {
     rollErrors.integral = 0;
@@ -40,10 +40,8 @@ float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, floa
 	// calculate current error
 	errors.currentError = setpoint - currentState;
 
-	if ((errors.currentError > -0.1 && errors.previousError < 0.1) || 
-		(errors.currentError < 0.1 && errors.previousError > -0.1)) {
-        errors.integral = 0;
-    }
+	if ((errors.currentError > 0) != (errors.previousError > 0))
+    	errors.integral = 0;
 
 	// calcualte integral
 	errors.integral += errors.currentError * deltaTime;
@@ -69,20 +67,16 @@ float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, floa
 	return output;
 }
 
-void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, uint8_t throttle) {
-	int16_t rollTrim 	= rollOutput;
-	int16_t pitchTrim 	= pitchOutput;
-	int16_t yawTrim 	= yawOutput;
+void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, uint32_t throttle) {
+	float speedFL = throttle + pitchOutput + rollOutput - yawOutput;
+	float speedFR = throttle + pitchOutput - rollOutput + yawOutput;
+	float speedRL = throttle - pitchOutput + rollOutput + yawOutput;
+	float speedRR = throttle - pitchOutput - rollOutput - yawOutput;
 
-	int16_t speedFL = throttle + pitchTrim + rollTrim - yawTrim;
-	int16_t speedFR = throttle + pitchTrim - rollTrim + yawTrim;
-	int16_t speedRL = throttle - pitchTrim + rollTrim + yawTrim;
-	int16_t speedRR = throttle - pitchTrim - rollTrim - yawTrim;
-
-	motorSpeed[MOTOR_FL] = constrain(speedFL, 0, 255);
-	motorSpeed[MOTOR_FR] = constrain(speedFR, 0, 255);
-	motorSpeed[MOTOR_RL] = constrain(speedRL, 0, 255);
-	motorSpeed[MOTOR_RR] = constrain(speedRR, 0, 255);
+	motorSpeed[MOTOR_FL] = constrain(speedFL, 0, 1023);
+	motorSpeed[MOTOR_FR] = constrain(speedFR, 0, 1023);
+	motorSpeed[MOTOR_RL] = constrain(speedRL, 0, 1023);
+	motorSpeed[MOTOR_RR] = constrain(speedRR, 0, 1023);
 }
 
 void initializePID() {
