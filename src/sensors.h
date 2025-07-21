@@ -7,12 +7,20 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 
+struct sensorData {
+	float roll;
+	float pitch;
+	float yaw;
+};
+
 extern Adafruit_ICM20948 icm;
 extern sensors_event_t accel, gyro, temp, mag;
 
-extern float accelData[3];
-extern float angularV[3];
-extern float orientations[3];
+extern sensorData accelData;
+extern sensorData angularV;
+extern sensorData orientations;
+
+extern unsigned long lastSensorTime;
 
 void initializeSensors();
 void readICM();

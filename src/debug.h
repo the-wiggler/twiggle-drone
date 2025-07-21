@@ -20,8 +20,8 @@ inline void monitorRollPitchPID(float rollOutput, float pitchOutput) {
 
 	// Check if 500 ms have passed since the last update
 	if (currentTime - lastUpdateTime >= 500) {
-		Serial.print("\rRoll: "); Serial.print(orientations[0]); Serial.print(" - Roll PID: "); 
-		Serial.print(rollOutput); Serial.print(" | Pitch: "); Serial.print(orientations[1]); 
+		Serial.print("\rRoll: "); Serial.print(orientations.roll); Serial.print(" - Roll PID: "); 
+		Serial.print(rollOutput); Serial.print(" | Pitch: "); Serial.print(orientations.pitch); 
 		Serial.print(" - Pitch PID: "); 
 		Serial.print(pitchOutput); Serial.print("         ");
 
@@ -30,11 +30,11 @@ inline void monitorRollPitchPID(float rollOutput, float pitchOutput) {
 }
 
 inline void logData(float rollPID, float pitchPID) {
-	Serial.print(orientations[0]); //roll
+	Serial.print(orientations.roll); //roll
 	Serial.print(",");
 	Serial.print(rollPID); //roll pid
 	Serial.print(",");
-	Serial.print(orientations[1]); //pitch
+	Serial.print(orientations.pitch); //pitch
 	Serial.print(",");
 	Serial.print(pitchPID); //pitch pid
 	Serial.print(",");

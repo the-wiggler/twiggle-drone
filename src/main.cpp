@@ -137,8 +137,8 @@ void loop() {
 	float rollOutput, pitchOutput;
 
 	// calculate PID outputs if the sensor data is safe to access (not being used)
-	rollOutput 	= calculatePID(ROLL_PID, rollErrors, local_control_packet.roll, orientations[0]);
-	pitchOutput = calculatePID(PITCH_PID, pitchErrors, local_control_packet.pitch, orientations[1]);
+	rollOutput 	= calculatePID(ROLL_PID, rollErrors, local_control_packet.roll, orientations.roll);
+	pitchOutput = calculatePID(PITCH_PID, pitchErrors, local_control_packet.pitch, orientations.pitch);
 
 	// placeholder since im lazy and havent implemented yaw stuff yet
 	float yawOutput = 0;
@@ -150,7 +150,7 @@ void loop() {
 	updateMotorSpeed();
 
 	//monitorRollPitchPID(rollOutput, pitchOutput);
-	monitorMotorSpeeds();
+	//monitorMotorSpeeds();
 
 	// maintains the 200 Hz clock speed
 	unsigned long elapsedTime = micros() - startTime;
