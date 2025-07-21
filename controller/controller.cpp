@@ -104,9 +104,9 @@ int main() {
                         if (pid_tuning) {
                             if (mouseX >= boxX && mouseX <= boxX + BOX_WIDTH &&
                                 mouseY >= boxY && mouseY <= boxY + BOX_HEIGHT) {
-                                if (i == 0) proportional += 0.1f;
-                                else if (i == 1) integral += 0.1f;
-                                else if (i == 2) derivative += 0.001f;
+                                if (i == 0) proportional += 1.0f;
+                                else if (i == 1) integral += 1.0f;
+                                else if (i == 2) derivative += 1.0f;
                                 box_clicked = true;
                             }
                         }
@@ -122,9 +122,9 @@ int main() {
                         if (pid_tuning) {
                             if (mouseX >= boxX && mouseX <= boxX + BOX_WIDTH &&
                                 mouseY >= boxY && mouseY <= boxY + BOX_HEIGHT) {
-                                if (i == 0) proportional -= 0.1f;
-                                else if (i == 1) integral -= 0.1f;
-                                else if (i == 2) derivative -= 0.001f;
+                                if (i == 0) proportional -= 1.0f;
+                                else if (i == 1) integral -= 1.0f;
+                                else if (i == 2) derivative -= 1.0f;
                                 box_clicked = true;
                         }
                         }

@@ -117,7 +117,7 @@ void renderParameterBoxes(float param1, float param2, float param3, TTF_Font* fo
         // prepare text
         float value = (i == 0) ? param1 : (i == 1) ? param2 : param3;
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(1) << value;
+        ss << std::fixed << std::setprecision(0) << value;
         std::string text = ss.str();
         
         // render text
