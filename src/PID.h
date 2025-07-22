@@ -19,16 +19,34 @@ struct PIDErrors {
 	unsigned long lastTime;
 };
 
-extern PID ROLL_PID;
-extern PID PITCH_PID;
-extern PID YAW_PID;
+// attitude PIDs
+extern PID ROLL_ATTITUDE_PID;
+extern PID PITCH_ATTITUDE_PID;
+extern PID YAW_ATTITUDE_PID;
 
-extern PIDErrors rollErrors;
-extern PIDErrors pitchErrors;
-extern PIDErrors yawErrors;
+// rate PIDs
+extern PID ROLL_RATE_PID;
+extern PID PITCH_RATE_PID;
+extern PID YAW_RATE_PID;
+
+// error for attitude controller
+extern PIDErrors rollAttitudeErrors;
+extern PIDErrors pitchAttitudeErrors;
+extern PIDErrors yawAttitudeErrors;
+
+// error for rate controller
+extern PIDErrors rollRateErrors;
+extern PIDErrors pitchRateErrors;
+extern PIDErrors yawRateErrors;
+
+extern float MAX_ROLL_RATE;
+extern float MAX_PITCH_RATE;
+extern float MAX_YAW_RATE;
 
 float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, float currentState);
 void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, uint32_t throttle);
 void initializePID();
+void resetPID();
+void PIDControl(float desiredRoll, float desiredPitch, float desiredYaw, uint32_t throttle);
 
 #endif

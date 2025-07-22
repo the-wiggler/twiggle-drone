@@ -117,10 +117,6 @@ void loop() {
 		localControlPacket = controlPacketBuffer[activeBuffer];
 		xSemaphoreGive(controlPacketMutex); // release packet mutex
 	}
-
-	// read of pid_packet. this is so one can adjust the PID values via the controller on the fly
-	// for tuning and debug purposes. ONLY ACTIVATE IF YOU WANT TO TUNE PID VALUES!!!
-	receivePidDataPacket(pidPacketMutex, pid_packet);
 	
 	// skips motor control if a system failure is detected
 	if (SYSTEM_FAILURE) return;
@@ -134,12 +130,8 @@ void loop() {
 	calculateOrientation();
 
 	// calculate PID outputs if the sensor data is safe to access (not being used)
-	float rollOutput	= calculatePID(ROLL_PID, rollErrors, localControlPacket.roll, orientations.roll);
-	float pitchOutput 	= calculatePID(PITCH_PID, pitchErrors, localControlPacket.pitch, orientations.pitch);
-	float yawOutput 	= calculatePID(YAW_PID, yawErrors, localControlPacket.yaw, angularV.yaw); 
-
-	// changes the state of the motor speed arrays to PID corrected values
-	updateMotorsFromPID(rollOutput, pitchOutput, yawOutput, localControlPacket.throttle);
+	PIDControl(localControlPacket.roll, localControlPacket.pitch, localControlPacket.yaw, 
+				localControlPacket.throttle);
 
 	// sends the new motor speeds to the PWM hardware
 	updateMotorSpeed();

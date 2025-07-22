@@ -46,23 +46,19 @@ inline void logData(float rollOutput, float pitchOutput) {
 	Serial.print(motorSpeed[MOTOR_RL]);
 	Serial.print(",");
 	Serial.println(motorSpeed[MOTOR_RR]);
-	Serial.print(ROLL_PID.Kp); //roll pid
-	Serial.print(",");
-	Serial.print(ROLL_PID.Ki); //roll pid
-	Serial.print(",");
-	Serial.print(ROLL_PID.Kd); //roll pid
 }
 
-inline void receivePidDataPacket(SemaphoreHandle_t pidPacketMutex, udpPacket pid_packet) {
-	if (xSemaphoreTake(pidPacketMutex, 0)) {
-		ROLL_PID.Kp = pid_packet.roll;
-		ROLL_PID.Ki = pid_packet.pitch;
-		ROLL_PID.Kd = pid_packet.yaw;
-		PITCH_PID.Kp = pid_packet.roll;
-		PITCH_PID.Ki = pid_packet.pitch;
-		PITCH_PID.Kd = pid_packet.yaw;
-		xSemaphoreGive(pidPacketMutex);
-	}
-}
+// ignore this it doesnt work anymore
+// inline void receivePidDataPacket(SemaphoreHandle_t pidPacketMutex, udpPacket pid_packet) {
+// 	if (xSemaphoreTake(pidPacketMutex, 0)) {
+// 		ROLL_PID.Kp = pid_packet.roll;
+// 		ROLL_PID.Ki = pid_packet.pitch;
+// 		ROLL_PID.Kd = pid_packet.yaw;
+// 		PITCH_PID.Kp = pid_packet.roll;
+// 		PITCH_PID.Ki = pid_packet.pitch;
+// 		PITCH_PID.Kd = pid_packet.yaw;
+// 		xSemaphoreGive(pidPacketMutex);
+// 	}
+// }
 
 #endif
