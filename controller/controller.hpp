@@ -8,9 +8,13 @@
 #include <ws2tcpip.h>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include "controller.hpp"
+#include <cmath>
+#include <chrono>
+#include <thread>
 #include <iomanip>
 
-constexpr float MAX_DRONE_TILT = 0.2; // the maximum amount of radians the drone can tilt when being controlled
+constexpr float MAX_DRONE_TILT = 0.3; // the maximum amount of radians the drone can tilt when being controlled
 
 struct controlVector {
     int8_t roll;
@@ -65,6 +69,18 @@ void moveRight() {
     SDL_FRect upRect = {550, 200, 100, 50};
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     SDL_RenderFillRect(renderer, &upRect);
+}
+
+void yawLeft() {
+    SDL_FRect yawLeftRect = {350, 75, 100, 50};
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Set color to red
+    SDL_RenderFillRect(renderer, &yawLeftRect);
+}
+
+void yawRight() {
+    SDL_FRect yawRightRect = {550, 75, 100, 50};
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Set color to red
+    SDL_RenderFillRect(renderer, &yawRightRect);
 }
 
 void setControlOutline() {
