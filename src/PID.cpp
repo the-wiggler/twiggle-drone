@@ -12,7 +12,7 @@
 // PID Coefficients (change for tuning)
 PID ROLL_PID	{ 0.0, 0.0, 0.0 };
 PID PITCH_PID	{ 0.0, 0.0, 0.0 };
-PID YAW_PID		{ 0.0, 0.0, 0.0 };
+PID YAW_PID		{ 20, 0.0, 0.0 };
 
 // stores error states of an iteration so the program can bring the state closer to setpoints
 PIDErrors rollErrors 	{ 0, 0, 0, 0 };
@@ -68,8 +68,8 @@ float calculatePID(const PID& pidCoeffs, PIDErrors& errors, float setpoint, floa
 }
 
 void updateMotorsFromPID(float rollOutput, float pitchOutput, float yawOutput, uint32_t throttle) {
-	float speedFL = throttle + pitchOutput + rollOutput - yawOutput;
-	float speedFR = throttle + pitchOutput - rollOutput + yawOutput;
+	float speedFL = throttle + pitchOutput + rollOutput + yawOutput;
+	float speedFR = throttle + pitchOutput - rollOutput - yawOutput;
 	float speedRL = throttle - pitchOutput + rollOutput + yawOutput;
 	float speedRR = throttle - pitchOutput - rollOutput - yawOutput;
 

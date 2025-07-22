@@ -14,7 +14,7 @@ inline void monitorMotorSpeeds() {
 	Serial.print(" | RR: "); Serial.print(motorSpeed[MOTOR_RR]); Serial.print("     ");
 }
 
-inline void monitorRollPitchPID(float rollOutput, float pitchOutput) {
+inline void monitorRollPitchPID(float rollOutput, float pitchOutput, float yawOutput) {
 	static unsigned long lastUpdateTime = 0; // Tracks the last time the Serial output was updated
 	unsigned long currentTime = millis();
 
@@ -22,8 +22,9 @@ inline void monitorRollPitchPID(float rollOutput, float pitchOutput) {
 	if (currentTime - lastUpdateTime >= 500) {
 		Serial.print("\rRoll: "); Serial.print(orientations.roll); Serial.print(" - Roll PID: "); 
 		Serial.print(rollOutput); Serial.print(" | Pitch: "); Serial.print(orientations.pitch); 
-		Serial.print(" - Pitch PID: "); 
-		Serial.print(pitchOutput); Serial.print("         ");
+		Serial.print(" - Pitch PID: "); Serial.print(pitchOutput); Serial.print(" | Yaw: ");
+		Serial.print(orientations.yaw); Serial.print(" - Yaw PID: "); Serial.print(yawOutput);
+		Serial.print("         ");
 
 		lastUpdateTime = currentTime;
 	}

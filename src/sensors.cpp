@@ -75,7 +75,7 @@ void calculateOrientation() {
 	orientations.pitch 	= 0.96f * (orientations.pitch + angularV.pitch * deltaTime) +
 						  0.04f * absolutePitch;
 	
-	// yaw remains bad for now because I havent tried to figure it out yet! :(
+	orientations.yaw += angularV.yaw * deltaTime;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END SENSOR FUNCTIONS

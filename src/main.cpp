@@ -15,9 +15,9 @@ SemaphoreHandle_t controlPacketMutex;
 SemaphoreHandle_t pidPacketMutex;
 
 // buffers for control packets
-udpPacket control_packet_buffer[2];
-volatile int active_buffer = 0;
-volatile int write_buffer = 1;
+udpPacket controlPacketBuffer[2];
+volatile int activeBuffer = 0;
+volatile int writeBuffer = 1;
 
 // packet timeout
 unsigned long lastPacketTime = 0;
@@ -45,8 +45,8 @@ void setup() {
 	pidPacketMutex 		= xSemaphoreCreateMutex();
 
 	// sets initial default value to control packet buffers
-	control_packet_buffer[0] = {0, 0, 0, 0};
-	control_packet_buffer[1] = {0, 0, 0, 0};
+	controlPacketBuffer[0] = {0, 0, 0, 0};
+	controlPacketBuffer[1] = {0, 0, 0, 0};
 
 	lastPacketTime = millis();
 	packetTimeout = false;
@@ -99,9 +99,9 @@ void loop() {
 			setAllMotorSpeed(0);
 			updateMotorSpeed();
 
-			//Serial.println("PACKET TIMEOUT - MOTORS KILLED");
+			Serial.println("PACKET TIMEOUT - MOTORS KILLED");
 			packetTimeout = true;
-			//monitorMotorSpeeds();
+			monitorMotorSpeeds();
 		}
 		return;
 	}
@@ -111,10 +111,10 @@ void loop() {
 
 	// this collects info from control_packet so its memory safe
 
-	udpPacket local_control_packet;
+	udpPacket localControlPacket;
 	// read of control_packet
 	if (xSemaphoreTake(controlPacketMutex, 0)) {	// 0 means dont wait if its taken
-		local_control_packet = control_packet_buffer[active_buffer];
+		localControlPacket = controlPacketBuffer[activeBuffer];
 		xSemaphoreGive(controlPacketMutex); // release packet mutex
 	}
 
@@ -133,24 +133,20 @@ void loop() {
 	// calculates the orientation of the drone (in radians) based off of stored sensor data
 	calculateOrientation();
 
-
-	float rollOutput, pitchOutput;
-
 	// calculate PID outputs if the sensor data is safe to access (not being used)
-	rollOutput 	= calculatePID(ROLL_PID, rollErrors, local_control_packet.roll, orientations.roll);
-	pitchOutput = calculatePID(PITCH_PID, pitchErrors, local_control_packet.pitch, orientations.pitch);
-
-	// placeholder since im lazy and havent implemented yaw stuff yet
-	float yawOutput = 0;
+	float rollOutput	= calculatePID(ROLL_PID, rollErrors, localControlPacket.roll, orientations.roll);
+	float pitchOutput 	= calculatePID(PITCH_PID, pitchErrors, localControlPacket.pitch, orientations.pitch);
+	float yawOutput 	= calculatePID(YAW_PID, yawErrors, localControlPacket.yaw, angularV.yaw); 
 
 	// changes the state of the motor speed arrays to PID corrected values
-	updateMotorsFromPID(rollOutput, pitchOutput, yawOutput, local_control_packet.throttle);
+	updateMotorsFromPID(rollOutput, pitchOutput, yawOutput, localControlPacket.throttle);
 
 	// sends the new motor speeds to the PWM hardware
 	updateMotorSpeed();
 
-	//monitorRollPitchPID(rollOutput, pitchOutput);
-	//monitorMotorSpeeds();
+	// debug stuff
+	//monitorRollPitchPID(rollOutput, pitchOutput, yawOutput);
+	monitorMotorSpeeds();
 	//logData(rollOutput, pitchOutput);
 
 	// maintains the 200 Hz clock speed
@@ -167,11 +163,11 @@ void loop() {
 void core0Process(void *parameter) {
 	while(true) {
 		if (!SYSTEM_FAILURE) {
-			udpPacket received_packet;
+			udpPacket receivedPacket;
 
 			// only updates control_packet if a new packet was received
-			if (receiveUDPCommand(received_packet) && received_packet.identifier == 'c') {
-				control_packet_buffer[write_buffer] = received_packet;
+			if (receiveUDPCommand(receivedPacket) && receivedPacket.identifier == 'c') {
+				controlPacketBuffer[writeBuffer] = receivedPacket;
 
 				// responsible for keeping track of connection status
 				lastPacketTime = millis();
@@ -179,16 +175,16 @@ void core0Process(void *parameter) {
 
 				// if available, writes newly recieved packet to global control_packet variable
 				if (xSemaphoreTake(controlPacketMutex, 3 / portTICK_PERIOD_MS)) {
-					int temp = active_buffer;
-					active_buffer = write_buffer;
-					write_buffer = temp;
+					int temp = activeBuffer;
+					activeBuffer = writeBuffer;
+					writeBuffer = temp;
 					xSemaphoreGive(controlPacketMutex);
 				}
 				// if the mutex cant be written to, the new packet will be used next time!
 			}
-			else if (received_packet.identifier == 'p') {
+			else if (receivedPacket.identifier == 'p') {
 				if(xSemaphoreTake(pidPacketMutex, 3 / portTICK_PERIOD_MS)) {
-					pid_packet = received_packet;
+					pid_packet = receivedPacket;
 					xSemaphoreGive(pidPacketMutex);
 				}
 			}
