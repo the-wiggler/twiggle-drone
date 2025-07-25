@@ -92,20 +92,10 @@ udpPacket control_packet;
 udpPacket pid_packet;
 
 void loop() {
-
+	if (SYSTEM_FAILURE) return;
+	
 	// checks if a packet has been received from the controller recently, if not, it kills motors
-	if (millis() - lastPacketTime > PACKET_TIMEOUT_MS && lastPacketTime != 0) {
-		if(!packetTimeout) {
-			setAllMotorSpeed(0);
-			updateMotorSpeed();
-
-			Serial.println("PACKET TIMEOUT - MOTORS KILLED");
-			packetTimeout = true;
-			monitorMotorSpeeds();
-		}
-		return;
-	}
-
+	//if (checkPacketTimeout(lastPacketTime, PACKET_TIMEOUT_MS, packetTimeout)) return;
 	// restores motor control if a packet has been received 
 	if (packetTimeout) packetTimeout = false;
 
@@ -117,9 +107,6 @@ void loop() {
 		localControlPacket = controlPacketBuffer[activeBuffer];
 		xSemaphoreGive(controlPacketMutex); // release packet mutex
 	}
-	
-	// skips motor control if a system failure is detected
-	if (SYSTEM_FAILURE) return;
 
 	unsigned long  startTime = micros();	
 
@@ -131,7 +118,7 @@ void loop() {
 
 	// calculate PID outputs if the sensor data is safe to access (not being used)
 	PIDControl(localControlPacket.roll, localControlPacket.pitch, localControlPacket.yaw, 
-				localControlPacket.throttle);
+				400);
 
 	// sends the new motor speeds to the PWM hardware
 	updateMotorSpeed();

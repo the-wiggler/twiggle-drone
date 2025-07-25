@@ -3,6 +3,9 @@
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
+#include <motors.h>
+#include <debug.h>
+#include <config.h>
 
 struct udpPacket {
     char identifier;
@@ -44,6 +47,21 @@ inline bool receiveUDPCommand(udpPacket& receivedPacket) {
     }
     
     return false; // return false if no packet was received or if it was invalid
+}
+
+inline bool checkPacketTimeout(unsigned long lastPacketTime, unsigned long PACKET_TIMEOUT_MS, bool& packetTimeout) {
+    if (millis() - lastPacketTime > PACKET_TIMEOUT_MS && lastPacketTime != 0) {
+		if(!packetTimeout) {
+			setAllMotorSpeed(0);
+			updateMotorSpeed();
+
+			Serial.println("PACKET TIMEOUT - MOTORS KILLED");
+			packetTimeout = true;
+            return true;
+		}
+        return true;
+	}
+    else return false;
 }
 
 

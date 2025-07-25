@@ -10,8 +10,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // PID Coefficients (change for tuning)
-PID ROLL_ATTITUDE_PID	{ 20.0, 0.0, 0.0 };
-PID PITCH_ATTITUDE_PID	{ 20.0, 0.0, 0.0 };
+PID ROLL_ATTITUDE_PID	{ 200.0, 0.0, 0.0 };
+PID PITCH_ATTITUDE_PID	{ 200.0, 0.0, 0.0 };
 PID YAW_ATTITUDE_PID	{ 10.0, 0.0, 0.0 };
 
 PID ROLL_RATE_PID		{ 10.0, 0.0, 0.0 };
@@ -31,8 +31,8 @@ float MAX_ROLL_RATE 	= 0.3;
 float MAX_PITCH_RATE 	= 0.3;
 float MAX_YAW_RATE 		= 0.15;
 
-constexpr float ATTITUDE_INTEGRAL_MAX = 0.5;
-constexpr float ATTITUDE_INTEGRAL_MIN = -0.5;
+constexpr float ATTITUDE_INTEGRAL_MAX = 5;
+constexpr float ATTITUDE_INTEGRAL_MIN = 5;
 constexpr float RATE_INTEGRAL_MAX = 20.0;
 constexpr float RATE_INTEGRAL_MIN = -20.0;
 
@@ -97,7 +97,7 @@ void PIDControl(float desiredRoll, float desiredPitch, float desiredYaw, uint32_
 	desiredPitchRate 	= constrain(desiredPitchRate, -MAX_PITCH_RATE, MAX_PITCH_RATE);
 	desiredYawRate 		= constrain(desiredYawRate, -MAX_YAW_RATE, MAX_YAW_RATE);
 
-	// rate control (reads the desited turn rate ans transforms it into appropriate motor output)
+	// rate control (reads the desited turn rate and transforms it into appropriate motor outputs)
 	float rollOutput 	= calculatePID(ROLL_RATE_PID, rollRateErrors, 
 										desiredRollRate, angularV.roll);
 	float pitchOutput 	= calculatePID(PITCH_RATE_PID, pitchRateErrors, 

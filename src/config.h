@@ -3,10 +3,10 @@
 
 #include <Arduino.h>
 
-constexpr uint8_t MOTOR_FL_PIN 		= 2; 	// pin for motor front left
-constexpr uint8_t MOTOR_FR_PIN 		= 5; 	// pin for motor front right
-constexpr uint8_t MOTOR_RL_PIN 		= 3; 	// pin for motor rear left
-constexpr uint8_t MOTOR_RR_PIN 		= 4; 	// pin for motor rear right
+constexpr uint8_t MOTOR_FL_PIN 		= 3; 	// pin for motor front left
+constexpr uint8_t MOTOR_FR_PIN 		= 2; 	// pin for motor front right
+constexpr uint8_t MOTOR_RL_PIN 		= 4; 	// pin for motor rear left
+constexpr uint8_t MOTOR_RR_PIN 		= 5; 	// pin for motor rear right
 
 constexpr uint8_t MOTOR_FL 			= 0; 	// PWM channel for motor front left
 constexpr uint8_t MOTOR_FR 			= 1; 	// PWM channel for motor front right
