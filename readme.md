@@ -51,3 +51,8 @@ twiggle-drone/<br>
 ## Building the Controller (PC-side)
 1. Requires C++17, SDL3
 2. Run the build script
+
+## Building the Drone Body
+1. Download the STL files found in the assets folder
+2. Recommended 3d print settings: PLA, 100% infill
+<img src="assets/IMG_9802.jpg" alt="drone_body_pic" width="40%">
